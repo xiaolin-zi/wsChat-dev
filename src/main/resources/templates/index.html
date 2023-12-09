@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎来到聊天室</title>
+</head>
+<body>
+Welcome<br/> <span id="yhm"></span>
+
+<div id="div1">
+
+    <input id="account" type="text" placeholder="用户名"/>
+
+    <button onclick="init()">连接聊天室</button>
+
+    <hr/>
+</div>
+
+<div id="div2" hidden>
+    指定用户id:<input id="userId" type="text"/>
+    内容:<input id="text" type="text"/>
+    <button onclick="send()">发送消息</button>
+    <hr/>
+
+</div>
+
+
+<div id="message"></div>
+
+
+</body>
+<script type="text/javascript">
+    var websocaket =null;
+
+
+    function init() {
+        var account=document.getElementById("account").value;
+        if (account==''){
+            setdivInnerHTML("没有输入UID");
+            return false;
+        }
+
+
+        if('WebSocket' in window){
+            websocaket = new WebSocket("ws://localhost:8080/chat/"+account);//用于创建 WebSocket 对象。WebSocketTest对应的是java类的注解值
+        }
+        else {
+            setdivInnerHTML("当前浏览器不支持");
+        }
+        //连接发生错误的时候回调方法；
+        websocaket.onerror=function(){
+            setdivInnerHTML("连接错误");
+        }
+        //连接成功时建立回调方法；
+        websocaket.onopen=function(){
+
+            document.getElementById("div2").hidden=false;
+
+            document.getElementById("div1").hidden=true;
+            document.getElementById("yhm").text(account);
+
+            setdivInnerHTML("连接成功");
+        }
+        //收到消息的回调方法
+        websocaket.onmessage=function(msg){
+            setdivInnerHTML(msg.data);
+        }
+        //连接关闭的回调方法
+        websocaket.onclose=function(){
+            setdivInnerHTML("关闭成功");
+        }
+    }
+    //关闭websocket
+    //
+    function closea() {
+        websocaket.close();
+        alert("点击关闭");
+    }
+    function setdivInnerHTML(innerHTML) {
+        document.getElementById('message').innerHTML += innerHTML + '<br/>';
+    }
+
+    function sendSingleMessage(message,sendId, acceptIdElement) {
+        var obj = {
+            "type":"1",//1代表单聊
+            "send_id":sendId,
+            "accept_id":acceptIdElement,
+            "content":message,
+            "accept_group":[]//群聊
+        };
+        //转为json字符串
+        obj = JSON.stringify(obj);
+        websocaket.send(obj);//给后台发送数据
+    }
+
+    function sendGroupMessage(message,sendId, acceptId) {
+        var obj = {
+            "type":"2",//2代表群发消息
+            "send_id":sendId,
+            "accept_id":"",//群发消息，accept_id为空
+            "content":message,
+            "accept_group":acceptId//群聊
+        };
+        //转为json字符串
+        obj = JSON.stringify(obj);
+        websocaket.send(obj);//给后台发送数据
+    }
+
+    function send() {
+        var message = document.getElementById('text').value;
+        var sendId=document.getElementById("account").value;
+        var acceptIds = document.getElementById('userId').value;
+        if (acceptIds==''){
+            setdivInnerHTML("没有输入UID");
+            return false;
+        }
+        if (message==''){
+            setdivInnerHTML("没有输入内容");
+            return false;
+        }
+        //对acceptId进行分割，按照逗号分割
+        var acceptId=acceptIds.split(",");
+
+        //如果acceptId数组长度为1，说明是单聊
+        if (acceptId.length==1){
+            sendSingleMessage(message,sendId,acceptId[0]);
+        }else {
+            sendGroupMessage(message,sendId,acceptId);
+        }
+
+    }
+</script>
+</html>
