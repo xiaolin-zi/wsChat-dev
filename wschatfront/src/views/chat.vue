@@ -555,6 +555,19 @@ export default {
 
       /** 接收类型-聊天内容 */
       if (obj.contentType === 'message'|| obj.contentType === 'image') {
+        //更新会话列表的最后一条消息
+        console.log(this.messageList)
+        this.messageList.forEach((item) => {
+          if (item.acceptId === obj.acceptId) {
+            item.lastMess = obj.content;
+            item.lastTime = moment().format('MM-DD');
+            //更新redis
+            MessageApi.saveMessageToRedis(item).then((res) => {
+              // console.log(res);
+            })
+          }
+        })
+
         if (obj.acceptId !== this.userInfo.id) {
           // console.log(obj.accept_id)
           // 强制刷新
@@ -762,6 +775,10 @@ export default {
             isHave = true;
           }
         })
+        let lastMess = this.mess;
+        if (contentType === 'image') {
+          lastMess = '[图片]'
+        }
         //如果没有，就添加一条
         if (!isHave) {
           let obj = {
@@ -770,7 +787,7 @@ export default {
             avatar: this.acceptUser.avatar,
             name: this.acceptUser.name,
             type: this.acceptUser.type,
-            lastMess: this.mess,
+            lastMess: lastMess,
             lastTime: moment().format('MM-DD'),
           }
           this.messageList.push(obj)
@@ -785,7 +802,7 @@ export default {
             avatar: this.userInfo.avatar,
             name: this.userInfo.nickname,
             type: 1,
-            lastMess: this.mess,
+            lastMess: lastMess,
             lastTime: moment().format('MM-DD'),
           }
           MessageApi.saveMessageToRedis(obj2).then((res) => {
@@ -799,12 +816,16 @@ export default {
             avatar: this.acceptUser.avatar,
             name: this.acceptUser.name,
             type: this.acceptUser.type,
-            lastMess: this.mess,
+            lastMess: lastMess,
             lastTime: moment().format('MM-DD'),
           }
           this.messageList.forEach((item) => {
             if (item.acceptId === this.acceptUser.userId) {
-              item.lastMess = this.mess;
+              if (contentType === 'image') {
+                item.lastMess = '[图片]'
+              } else {
+                item.lastMess = this.mess;
+              }
               item.lastTime = moment().format('MM-DD');
             }
           })
