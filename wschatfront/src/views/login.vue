@@ -16,6 +16,10 @@
           v-model="loginInfo.password"
         />
         <button type="submit" class="login__button">Login</button>
+        <!--注册-->
+        <router-link to="/register" >
+          去注册
+        </router-link>
       </form>
     </div>
   </div>
@@ -146,6 +150,12 @@ export default {
 .login__button:disabled:focus {
   background-color: #ccc;
 }
+
+
+
+
+
+
 
 
 </style>

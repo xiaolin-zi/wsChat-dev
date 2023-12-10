@@ -15,5 +15,5 @@ import lombok.Data;
 @Data
 public class MessageInfoVO extends Message {
 
-    private String lastTime;
+
 }

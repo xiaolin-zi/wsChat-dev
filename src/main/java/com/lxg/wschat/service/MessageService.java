@@ -2,8 +2,10 @@ package com.lxg.wschat.service;
 
 import com.lxg.wschat.domain.Message;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.lxg.wschat.domain.MessageDetail;
 import com.lxg.wschat.dto.GetChatRecordsDTO;
 import com.lxg.wschat.dto.MessageDTO;
+import com.lxg.wschat.dto.MessageRedisDTO;
 import com.lxg.wschat.vo.MessageDetialInfoVO;
 import com.lxg.wschat.vo.MessageInfoVO;
 
@@ -25,4 +27,9 @@ public interface MessageService extends IService<Message> {
     List<MessageDetialInfoVO> getChatRecord(HttpServletRequest request, String acceptId,Integer type);
 
     Map<String,List<MessageDetialInfoVO>> getAllChatRecords(HttpServletRequest request);
+
+
+    boolean addMessageToRedis(MessageRedisDTO messageRedisDTO);
+
+    void saveAll(List<Message> allMessage);
 }

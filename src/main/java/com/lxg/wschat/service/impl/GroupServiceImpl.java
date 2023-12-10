@@ -149,6 +149,9 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
         for (UserGroup userGroup : userGroups) {
             ids.add(userGroup.getGroupId());
         }
+        if(ids.size() == 0) {
+            return null;
+        }
         List<Group> groups = groupMapper.selectBatchIds(ids);
         //封装群组信息
         List<GroupInfoVO> groupInfoVOS = new ArrayList<>();

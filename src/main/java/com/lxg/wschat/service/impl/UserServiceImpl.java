@@ -21,6 +21,7 @@ import com.lxg.wschat.dto.RegisterDTO;
 import com.lxg.wschat.dto.UserDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -36,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author linxugeng
@@ -50,8 +52,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     // 模板引擎
     @Autowired
     TemplateEngine templateEngine;
+    @Qualifier("myRedisTemplate")
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String,Object> redisTemplate;
     @Autowired
     private JavaMailSender mailSender;
     // 发送邮件的邮箱
@@ -117,15 +120,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return R.error().message("验证码错误");
         }
 
+        // 查找数据库中是否存在该用户
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("account", account);
+        User user1 = baseMapper.selectOne(wrapper);
+        if (user1 != null) {
+            return R.error().message("该账号已存在");
+        }
+
         User user = new User();
         user.setAccount(account);
         user.setPassword(MD5.encrypt(password));
         user.setNickname(nickname);
         user.setEmail(email);
+        user.setAvatar("https://xiaolin-zi.oss-cn-guangzhou.aliyuncs.com/typora-img/202312062137300.webp");//默认头像
 
         int insert = baseMapper.insert(user);
         if (insert > 0) {
+            //注册成功，自动加入小黑子群聊
+            UserGroup userGroup = new UserGroup();
+            //查询用户的id
+            QueryWrapper<User> wrapper2 = new QueryWrapper<>();
+            wrapper2.eq("account", account);
+            User user2 = baseMapper.selectOne(wrapper2);
+
+            userGroup.setUserId(user2.getId());
+            userGroup.setGroupId("GP1732425017943670786");
+            userGroupService.save(userGroup);
+
+            UserGroup userGroup2 = new UserGroup();
+            userGroup2.setUserId(user2.getId());
+            userGroup2.setGroupId("GP2");
+            userGroupService.save(userGroup2);
+
             return R.ok().message("注册成功");
+
         } else {
             return R.error().message("注册失败");
         }
@@ -166,7 +195,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (b) {
             // 发送成功，把发送成功验证码放到redis里面
             // 设置有效时间5分钟
-            redisTemplate.opsForValue().set(email + "_code", code, 5);
+            redisTemplate.opsForValue().set(email + "_code", code, 5, TimeUnit.MINUTES);
             return true;
         } else {
             return false;

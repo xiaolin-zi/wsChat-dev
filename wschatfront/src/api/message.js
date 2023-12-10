@@ -24,5 +24,14 @@ export default {
             url: `/message/getAllChatRecords`,
             method: 'get'
         })
+    },
+
+    //保存会话记录到redis
+    saveMessageToRedis(message){
+        return request({
+            url: `/message/saveMessageToRedis`,
+            method: 'post',
+            data: message
+        })
     }
 }

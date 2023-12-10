@@ -8,11 +8,14 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.lxg.wschat.config.WebSocketConfigToken;
 import com.lxg.wschat.service.GroupService;
+import com.lxg.wschat.utils.SpringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -33,8 +36,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class WebSocketServerToken {
 
-    @Autowired
-    private GroupService groupService;
+
+
+
+//    @Autowired
+//    private RedisTemplate<String,Object> redisTemplate;
+
+    private RedisTemplate<String,Object> redisTemplate = SpringUtils.getBean("myRedisTemplate");
 
     /**
      * 打印日志
@@ -85,7 +93,6 @@ public class WebSocketServerToken {
 
         // 将JSON数据转换为对象，方便操作
         JSONObject obj = JSONUtil.parseObj(message);
-
         /**
          *  // 发送消息格式
          *         let obj = JSON.stringify({
@@ -103,11 +110,25 @@ public class WebSocketServerToken {
 
         // 判断是否为群聊，1为否，2为是
         if (obj.getStr("type").equals("1")) {
+            //判断是否是心跳
+            //"chat_"+id+"to_"+users.get(i)给每个用户都存储一份聊天记录
+            if(!obj.getStr("contentType").equals("ping")){
+                redisTemplate.opsForList().leftPush("chat_"+obj.getStr("sendId")+"to_"+obj.getStr("acceptId"),message);
+                log.info("chat_"+id+"to_"+obj.getStr("acceptId")+"的消息已存入redis");
+            }
             users.add(obj.getStr("sendId"));
             users.add(obj.getStr("acceptId"));
         } else if (obj.getStr("type").equals("2")) {
+            //将消息存储到redis中
+            //如果是群聊
+            //只保存一份
+            redisTemplate.opsForList().leftPush("chatGroup_"+obj.getStr("acceptId"),message);
+            log.info("chatGroup_"+obj.getStr("acceptId")+"的消息已存入redis");
             users = obj.getJSONArray("acceptMember");
         }
+
+
+
 
         // 判断是否存在发送对象
         if (users.size() > 0) {
@@ -120,6 +141,7 @@ public class WebSocketServerToken {
                     log.info("发送失败，用户ID为={}未在线", users.get(i));
                 }
             }
+            log.info("消息发送完毕！");
         } else {
             log.info("发送对象集合不能为空！");
         }

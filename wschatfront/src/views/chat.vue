@@ -486,7 +486,7 @@ export default {
         }
         // 获取聊天记录
         // this.getChatRecords()
-        this.chatRecordsList = this.allChatRecords[item.acceptId];
+        this.chatRecordsList = this.allChatRecords[item.id];
       } else if (type == '群组列表') {
         // alert('群组列表')
         this.acceptUser = {
@@ -497,7 +497,7 @@ export default {
         }
         // 获取聊天记录
         // this.getChatRecords()
-        this.chatRecordsList = this.allChatRecords[item.acceptId];
+        this.chatRecordsList = this.allChatRecords[item.id];
         this.getGroupMembers();
       } else if (type == '添加好友') {
         // alert('添加好友')
@@ -739,21 +739,57 @@ export default {
           content: message,
           sendTime: moment().format('YYYY-MM-DD HH:mm:ss')
         })
-        // console.log(obj);
-        // 保存消息到数据库
-        // this.$api.addMessContent(JSON.parse(obj))
-        //     .then((res) => {
-        //       if (res.data.code === 200) {
-        //         // 保存成功再发送消息
-        //         this.ws.send(obj)
-        //       }
-        //     })
-        //     .catch((err) => {
-        //       console.log(err)
-        //     })
+
         //发送消息
         console.log("发送消息")
         this.ws.send(obj)
+
+        //判断会话列表有没有该用户的会话
+        let isHave = false;
+        this.messageList.forEach((item) => {
+          if (item.acceptId === this.acceptUser.userId) {
+            isHave = true;
+          }
+        })
+        //如果没有，就添加一条
+        if (!isHave) {
+          let obj = {
+            userId: this.userInfo.id,
+            acceptId: this.acceptUser.userId,
+            avatar: this.acceptUser.avatar,
+            name: this.acceptUser.name,
+            type: this.acceptUser.type,
+            lastMess: this.mess,
+            lastTime: moment().format('MM-DD'),
+          }
+          this.messageList.push(obj)
+          //保存到redis
+          MessageApi.saveMessageToRedis(obj).then((res) => {
+            // console.log(res);
+          })
+        }else{
+          //如果有，就更新一条
+          let obj = {
+            userId: this.userInfo.id,
+            acceptId: this.acceptUser.userId,
+            avatar: this.acceptUser.avatar,
+            name: this.acceptUser.name,
+            type: this.acceptUser.type,
+            lastMess: this.mess,
+            lastTime: moment().format('MM-DD'),
+          }
+          this.messageList.forEach((item) => {
+            if (item.acceptId === this.acceptUser.userId) {
+              item.lastMess = this.mess;
+              item.lastTime = moment().format('MM-DD');
+            }
+          })
+          //保存到redis
+          MessageApi.saveMessageToRedis(obj).then((res) => {
+            // console.log(res);
+          })
+        }
+
         // 发送完消息，清空输入框
         this.mess = ''
       }

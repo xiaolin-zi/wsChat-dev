@@ -38,14 +38,16 @@ spring:
     url: jdbc:mysql://154.12.40.85:3306/wschat?characterEncoding=utf-8&useSSL=false
 
   redis:
-    host: localhost
+    host: 154.12.40.85
     port: 6379
+    database: 0
     timeout: 10000
     connect-timeout: 10000
-    password: 123456
+    password: 623718.a
     lettuce:
       pool:
         max-active: 8
         max-idle: 8
         max-wait: -1ms
         min-idle: 0
+

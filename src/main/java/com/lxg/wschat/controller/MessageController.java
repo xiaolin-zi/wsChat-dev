@@ -5,6 +5,7 @@ package com.lxg.wschat.controller;
 
 import com.lxg.wschat.dto.GetChatRecordsDTO;
 import com.lxg.wschat.dto.MessageDTO;
+import com.lxg.wschat.dto.MessageRedisDTO;
 import com.lxg.wschat.service.MessageService;
 import com.lxg.wschat.service.UserService;
 import com.lxg.wschat.utils.JwtUtils;
@@ -56,7 +57,7 @@ public class MessageController {
 
 
     /**
-     * 新增会话记录
+     * 新增会话记录到mysql
      *
      * @param messageDTO
      * @return
@@ -71,7 +72,19 @@ public class MessageController {
     }
 
     /**
-     * 根据acceptId获取详细聊天记录
+     * 新增会话记录到redis
+     */
+    @PostMapping("/saveMessageToRedis")
+    public R addMessageToRedis(@Valid @RequestBody MessageRedisDTO messageRedisDTO) {
+        boolean flag = messageService.addMessageToRedis(messageRedisDTO);
+        if (flag) {
+            return R.ok().message("新增会话记录到redis成功");
+        }
+        return R.error().message("新增会话记录到redis失败");
+    }
+
+    /**
+     * 根据acceptId和type获取详细聊天记录
      */
     @GetMapping("/getChatRecords/{acceptId}/{type}")
     public R getChatRecord(HttpServletRequest request, @PathVariable String acceptId, @PathVariable Integer type) {
@@ -97,4 +110,6 @@ public class MessageController {
         map.put("user", userService.getUserInfo(request));
         return R.ok().data("map",map);
     }
+
+
 }

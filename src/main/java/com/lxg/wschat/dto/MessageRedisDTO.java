@@ -9,13 +9,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
- * MessageDTO
+ * MessageRedisDTO
  *
  * @author linxugeng
- * @since 2023/12/7
+ * @since 2023/12/10
  */
 @Data
-public class MessageDTO {
+public class MessageRedisDTO {
     /**
      * 用户id
      */
@@ -36,23 +36,10 @@ public class MessageDTO {
     @NotNull(message = "聊天类型不能为空")
     private Integer type;
 
-    @NotNull(message = "接收人id不能为空")
-    @NotBlank(message = "接收人id不能为空")
+
+    @NotNull(message = "接收者id不能为空")
+    @NotBlank(message = "接收者id不能为空")
     private String acceptId;
-
-
-
-    /**
-     * 是否已读
-     */
-    @NotNull(message = "是否已读不能为空")
-    private Integer isRead;
-
-    /**
-     * 是否展示
-     */
-    @NotNull(message = "是否展示不能为空")
-    private Integer isShow;
 
     /**
      * 头像
@@ -65,4 +52,9 @@ public class MessageDTO {
      * 最后的消息
      */
     private String lastMess;
+
+    /**
+     * 最后的消息时间
+     */
+    private String lastTime;
 }

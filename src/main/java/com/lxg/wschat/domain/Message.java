@@ -63,6 +63,12 @@ public class Message implements Serializable {
      */
     private String lastMess;
 
+
+    /**
+     * 最后的消息时间
+     */
+    private String lastTime;
+
     /**
      * 逻辑删除
      */
@@ -105,6 +111,7 @@ public class Message implements Serializable {
             && (this.getIsShow() == null ? other.getIsShow() == null : this.getIsShow().equals(other.getIsShow()))
             && (this.getAvatar() == null ? other.getAvatar() == null : this.getAvatar().equals(other.getAvatar()))
             && (this.getLastMess() == null ? other.getLastMess() == null : this.getLastMess().equals(other.getLastMess()))
+                && (this.getLastTime() == null ? other.getLastTime() == null : this.getLastTime().equals(other.getLastTime()))
             && (this.getIsDeleted() == null ? other.getIsDeleted() == null : this.getIsDeleted().equals(other.getIsDeleted()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()));
@@ -123,6 +130,7 @@ public class Message implements Serializable {
         result = prime * result + ((getIsShow() == null) ? 0 : getIsShow().hashCode());
         result = prime * result + ((getAvatar() == null) ? 0 : getAvatar().hashCode());
         result = prime * result + ((getLastMess() == null) ? 0 : getLastMess().hashCode());
+        result = prime * result + ((getLastTime() == null) ? 0 : getLastTime().hashCode());
         result = prime * result + ((getIsDeleted() == null) ? 0 : getIsDeleted().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
@@ -144,6 +152,7 @@ public class Message implements Serializable {
         sb.append(", isShow=").append(isShow);
         sb.append(", avatar=").append(avatar);
         sb.append(", lastMess=").append(lastMess);
+        sb.append(", lastTime=").append(lastTime);
         sb.append(", isDeleted=").append(isDeleted);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
