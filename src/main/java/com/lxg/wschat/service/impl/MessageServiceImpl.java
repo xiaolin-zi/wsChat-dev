@@ -99,12 +99,32 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
             message.setLastTime(obj.getStr("lastTime"));
             userMessage.add(message);
         }
+
+
         log.info("redis中的会话记录为：{}",userMessage);
+
+        //再查数据库
 
         List<MessageInfoVO> messageList = new ArrayList<>();
         QueryWrapper<Message> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId);
         List<Message> messages = messageMapper.selectList(queryWrapper);
+        //遍历数据库中的会话记录，如果redis中有，则删除对应记录
+        //保存需要删除的记录
+        List<Message> needDelete = new ArrayList<>();
+        for(Message message : messages){
+            for(Message message1 : userMessage){
+                //比较记录，userId和acceptId相同，则删除messages中的记录
+                if(message.getUserId().equals(message1.getUserId()) && message.getAcceptId().equals(message1.getAcceptId())){
+                    //不能在遍历的时候删除，会报错
+                    //messages.remove(message);
+                    //保存需要删除的记录
+                    needDelete.add(message);
+                }
+            }
+        }
+        //删除需要删除的记录
+        messages.removeAll(needDelete);
         log.info("数据库中的会话记录为：{}",messages);
 
         messages.addAll(userMessage);
@@ -112,7 +132,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         for (Message message : messages) {
             MessageInfoVO messageInfoVO = new MessageInfoVO();
             BeanUtils.copyProperties(message, messageInfoVO);
-            //使用hutools将时间格式化为只有月日
             messageList.add(messageInfoVO);
         }
         return messageList;
@@ -288,6 +307,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         Message message = new Message();
         BeanUtils.copyProperties(messageRedisDTO, message);
         String messageStr = JSONUtil.toJsonStr(message);
+
         redisTemplate.opsForValue().set("chatMessage_"+message.getUserId()+"to_"+message.getAcceptId(),messageStr);
         return true;
     }

@@ -1,3 +1,16 @@
+aliyun:
+  oss:
+    file:
+      bucketname: edu20230513
+      endpoint: oss-cn-guangzhou.aliyuncs.com
+      keyid: LTAI5tDDc7oFqhiZFejDVZtp
+      keysecret: UWBM3EChOz3WNt4NiiJ4N8E0dTZH00
+  vod:
+    file:
+      keyid: LTAI5tDDc7oFqhiZFejDVZtp
+      keysecret: UWBM3EChOz3WNt4NiiJ4N8E0dTZH00
+
+
 server:
   port: 6666
 spring:

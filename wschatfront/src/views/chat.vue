@@ -177,7 +177,7 @@
               <div>
                 <span style="font-size: 8px;">{{ item.sendNickname }}   {{ formatDate(item.sendTime) }}</span>
               </div>
-              <div v-if="item.content_type === 'image'" class="img_left">
+              <div v-if="item.contentType === 'image'" class="img_left">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
               <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
@@ -191,7 +191,7 @@
               <div>
                 <span style="font-size: 8px;">{{ formatDate(item.sendTime) }}   {{ item.sendNickname }}</span>
               </div>
-              <div v-if="item.content_type === 'image'" class="img">
+              <div v-if="item.contentType === 'image'" class="img">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
               <div v-else class="content_me_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
@@ -293,7 +293,7 @@ import userApi from '@/api/user';
 import groupApi from "@/api/group";
 import MessageApi from "@/api/message";
 import cookie from "js-cookie";
-
+import ossApi from "@/api/oss";
 export default {
   name: 'wsChat',
   data() {
@@ -335,7 +335,10 @@ export default {
       sendImgLoad: false,// 发送图片按钮加载
       mess: '',//消息内容
       emojiList: emojiList.split(','), // 表情包列表
-      imgNowList: [],//图片预览列表
+      imgNowList: [
+        // 'https://fuss10.elemecdn.com/8/27/f01c15bb73e1ef3793e64e6b7bbccjpeg.jpeg',
+        // 'https://fuss10.elemecdn.com/1/8e/aeffeb4de74e2fde4bd74fc7b4486jpeg.jpeg'
+      ],//图片预览列表
       userInfo: {},//用户信息
       //接收者对象
       acceptUser: {
@@ -385,7 +388,6 @@ export default {
     getAllChatRecords() {
       MessageApi.getAllChatRecords().then((res) => {
         this.allChatRecords = res.data.data.map.allRecords;
-
       })
     },
     formatDate(date) {
@@ -472,6 +474,12 @@ export default {
         // 获取聊天记录
         // this.getChatRecords()
         this.chatRecordsList = this.allChatRecords[item.acceptId];
+        //将对应的会话聊天记录中的图片url放入imgNowList
+        this.chatRecordsList.forEach((item) => {
+          if (item.contentType === 'image') {
+            this.imgNowList.push(item.content)
+          }
+        })
         //如果是群聊，还需要获取群里的人员列表
         if (item.type == 2) {
           this.getGroupMembers();
@@ -546,7 +554,7 @@ export default {
       // 获取内容
 
       /** 接收类型-聊天内容 */
-      if (obj.contentType === 'message') {
+      if (obj.contentType === 'message'|| obj.contentType === 'image') {
         if (obj.acceptId !== this.userInfo.id) {
           // console.log(obj.accept_id)
           // 强制刷新
@@ -576,7 +584,9 @@ export default {
           }
         }
       }
-    },
+
+
+      },
     // 初始化websocket
     getwebsocket() {
       // console.log(this.userInfo);
@@ -625,22 +635,22 @@ export default {
 // 聊天图片发送
     WssendImg() {
       this.sendImgLoad = true
-      this.Wssendmess('image', this.files)
-      this.isShowDialog = false
-      // this.$api.upload(this.files, 'chart')
-      //     .then(res => {
-      //       this.sendImgLoad = false
-      //       if (res.data.code === 200) {
-      //         this.isShowDialog = false
-      //         this.Wssendmess('image', res.data.data)
-      //       } else {
-      //         this.$message.error(res.data.data)
-      //       }
-      //     })
-      //     .catch(err => {
-      //       this.sendImgLoad = false
-      //       this.$message.error(err)
-      //     })
+      let formData = new FormData()
+      formData.append('file', this.files)
+      //将图片上传到oss
+      ossApi.uploadFileToOss(formData).then((res) => {
+        this.sendImgLoad = false
+        if (res.data.code === 20000) {
+          this.isShowDialog = false
+
+          this.Wssendmess('image', res.data.data.url)
+        } else {
+          this.$message.error(res.data.message)
+        }
+      }).catch((err) => {
+        this.sendImgLoad = false
+        this.$message.error("图片上传失败")
+      })
     },
     /**
      * enter发送消息，ctrl+enter换行
@@ -718,6 +728,7 @@ export default {
       let message = this.mess;
       if (contentType === 'image') {
         message = content
+        console.log("发送的图片消息："+message);
       }
       if (message !== '') {
         // 发送消息格式
@@ -767,6 +778,19 @@ export default {
           MessageApi.saveMessageToRedis(obj).then((res) => {
             // console.log(res);
           })
+          //对方的会话列表也要添加一条
+          let obj2 = {
+            userId: this.acceptUser.userId,
+            acceptId: this.userInfo.id,
+            avatar: this.userInfo.avatar,
+            name: this.userInfo.nickname,
+            type: 1,
+            lastMess: this.mess,
+            lastTime: moment().format('MM-DD'),
+          }
+          MessageApi.saveMessageToRedis(obj2).then((res) => {
+            // console.log(res);
+          })
         }else{
           //如果有，就更新一条
           let obj = {
@@ -794,6 +818,7 @@ export default {
         this.mess = ''
       }
     },
+
   }
 
 }
