@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lxg.wschat.domain.Follow;
 import com.lxg.wschat.domain.User;
 import com.lxg.wschat.domain.UserGroup;
+import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.service.UserGroupService;
 import com.lxg.wschat.vo.UserInfoVO;
 import com.lxg.wschat.mapper.UserMapper;
@@ -357,6 +358,36 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         return userInfoVOList;
     }
+
+    @Override
+    public List<MahoutDataModel> getDataModel() {
+        //查用户关注表和用户所在群组表
+        QueryWrapper<Follow> wrapper = new QueryWrapper<>();
+        List<Follow> followList = followService.list(wrapper);
+        QueryWrapper<UserGroup> wrapper1 = new QueryWrapper<>();
+        List<UserGroup> userGroupList = userGroupService.list(wrapper1);
+        List<MahoutDataModel> list = new ArrayList<>();
+        for (Follow follow : followList) {
+            MahoutDataModel mahoutDataModel = new MahoutDataModel();
+            mahoutDataModel.setUserId(Long.valueOf(follow.getUserId()));
+            mahoutDataModel.setItemId(Long.valueOf(follow.getFriendId()));
+            mahoutDataModel.setScore(follow.getScore());
+            list.add(mahoutDataModel);
+        }
+
+        for (UserGroup userGroup : userGroupList) {
+            MahoutDataModel mahoutDataModel = new MahoutDataModel();
+            mahoutDataModel.setUserId(Long.valueOf(userGroup.getUserId()));
+            String groupId = userGroup.getGroupId();
+            //去除群聊前缀两个字符GP
+            String substring = groupId.substring(2);
+            mahoutDataModel.setItemId(Long.valueOf(substring));
+            mahoutDataModel.setScore(userGroup.getScore());
+            list.add(mahoutDataModel);
+        }
+        return list;
+    }
+
 
     @Override
     public boolean followUser(String userId, HttpServletRequest request) {

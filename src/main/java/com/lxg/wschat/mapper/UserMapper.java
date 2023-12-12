@@ -2,7 +2,10 @@ package com.lxg.wschat.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.lxg.wschat.domain.User;
+import com.lxg.wschat.mahout.MahoutDataModel;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * @author linxugeng
@@ -12,6 +15,7 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
+
 
 }
 

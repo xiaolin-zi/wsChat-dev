@@ -1,6 +1,8 @@
-package com.lxg.wschat;
+/**
+ * Copyright (c) 2023, CCSSOFT All Rights Reserved.
+ */
+package com.lxg.wschat.mahout;
 
-import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.service.UserService;
 import org.apache.mahout.cf.taste.common.TasteException;
 import org.apache.mahout.cf.taste.impl.common.FastByIDMap;
@@ -9,6 +11,8 @@ import org.apache.mahout.cf.taste.impl.model.GenericDataModel;
 import org.apache.mahout.cf.taste.impl.model.GenericPreference;
 import org.apache.mahout.cf.taste.impl.model.GenericUserPreferenceArray;
 import org.apache.mahout.cf.taste.impl.model.MemoryIDMigrator;
+import org.apache.mahout.cf.taste.impl.model.file.FileDataModel;
+import org.apache.mahout.cf.taste.impl.neighborhood.NearestNUserNeighborhood;
 import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
 import org.apache.mahout.cf.taste.impl.recommender.GenericUserBasedRecommender;
 import org.apache.mahout.cf.taste.impl.similarity.EuclideanDistanceSimilarity;
@@ -20,54 +24,36 @@ import org.apache.mahout.cf.taste.neighborhood.UserNeighborhood;
 import org.apache.mahout.cf.taste.recommender.RecommendedItem;
 import org.apache.mahout.cf.taste.recommender.Recommender;
 import org.apache.mahout.cf.taste.similarity.UserSimilarity;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.core.RedisTemplate;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class WsChatApplicationTests {
+/**
+ * TestUserMahout
+ *
+ * @author linxugeng
+ * @since 2023/12/11
+ */
+public class TestUserMahout {
     @Autowired
+    static
     UserService userService;
 
-    /**
-     * dataModel 有两种结构：
-     * GenericDataModel: 用户ID，物品ID，用户对物品的打分(UserID,ItemID,PreferenceValue)
-     * GenericBooleanPrefDataModel: 用户ID，物品ID (UserID,ItemID)，这种方式表达用户是否浏览过该物品，但并未对物品进行打分。
-     * 因为系统需要根据用户行为或评分进行推荐所以使用GenericDataModel
-     * @param preferenceList 用户行为或评分集合
-     * @return DataModel
-     */
-    private static DataModel buildJdbcDataModel(List<? extends MahoutDataModel> preferenceList) {
-        FastByIDMap<PreferenceArray> fastByIdMap = new FastByIDMap<>();
-        Map<Long, List<MahoutDataModel>> map = preferenceList.stream().collect(Collectors.groupingBy(MahoutDataModel::getUserId));
-        Collection<List<MahoutDataModel>> list = map.values();
-        for (List<MahoutDataModel> preferences : list) {
-            GenericPreference[] array = new GenericPreference[preferences.size()];
-            for (int i = 0; i < preferences.size(); i++) {
-                MahoutDataModel preference = preferences.get(i);
-                GenericPreference item = new GenericPreference(preference.getUserId(), preference.getItemId(), preference.getScore());
-                array[i] = item;
-            }
-            fastByIdMap.put(array[0].getUserID(), new GenericUserPreferenceArray(Arrays.asList(array)));
-        }
-        return new GenericDataModel(fastByIdMap);
-    }
 
-    @Test
-    void contextLoads() {
+
+    public static void main(String[] args) {
 //        File file = new File("D:\\testMahout.txt");
         // 实例化DataModel并将数据传入其内
         DataModel dataModel = null;
         //            dataModel = new FileDataModel(file);
-        List<MahoutDataModel> list = userService.getDataModel();
-        dataModel = buildJdbcDataModel(list);
+//        List<MahoutDataModel> list = userService.getDataModel();
+//        dataModel = buildJdbcDataModel(list);
         //余弦相似度
         try {
             UserSimilarity userSimilarity = new UncenteredCosineSimilarity(dataModel);
@@ -77,7 +63,7 @@ class WsChatApplicationTests {
             UserSimilarity userSimilarity2 = new PearsonCorrelationSimilarity(dataModel);
 
             //阈值相似度
-            UserNeighborhood userNeighborhood = new ThresholdUserNeighborhood(0.5, userSimilarity, dataModel);
+            UserNeighborhood userNeighborhood = new ThresholdUserNeighborhood(0.3, userSimilarity, dataModel);
 //            UserNeighborhood userNeighborhood = new NearestNUserNeighborhood(2,userSimilarity2,dataModel);
             // 构建推荐器，使用基于用户的协同过滤推荐
             Recommender recommender = new GenericUserBasedRecommender(dataModel, userNeighborhood, userSimilarity);
@@ -120,5 +106,4 @@ class WsChatApplicationTests {
 
 
     }
-
 }

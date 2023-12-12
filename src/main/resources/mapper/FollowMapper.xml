@@ -8,13 +8,14 @@
             <id property="id" column="id" jdbcType="VARCHAR"/>
             <result property="userId" column="user_id" jdbcType="VARCHAR"/>
             <result property="friendId" column="friend_id" jdbcType="VARCHAR"/>
+            <result property="score" column="score" jdbcType="INTEGER"/>
             <result property="isDeleted" column="is_deleted" jdbcType="TINYINT"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,user_id,friend_id,
+        id,user_id,friend_id,score,
         is_deleted,create_time,update_time
     </sql>
 </mapper>

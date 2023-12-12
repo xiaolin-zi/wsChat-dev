@@ -3,6 +3,7 @@ package com.lxg.wschat.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import com.lxg.wschat.domain.User;
+import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.vo.UserInfoVO;
 import com.lxg.wschat.utils.R;
 import com.lxg.wschat.dto.LoginByEmailForm;
@@ -45,4 +46,7 @@ public interface UserService extends IService<User> {
     List<UserInfoVO> getFansList(HttpServletRequest request);
 
     List<UserInfoVO> getFriendList(HttpServletRequest request);
+
+
+    List<MahoutDataModel> getDataModel();
 }

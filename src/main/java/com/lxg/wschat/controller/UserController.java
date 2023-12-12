@@ -1,5 +1,6 @@
 package com.lxg.wschat.controller;
 
+import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.vo.UserInfoVO;
 import com.lxg.wschat.service.UserService;
 import com.lxg.wschat.utils.R;
@@ -155,6 +156,21 @@ public class UserController {
         }
         return R.error().message("好友列表为空");
     }
+
+    /**
+     * 查询用户和群组的得分情况记录
+     */
+    @GetMapping("/getDataModel")
+    public R getScore() {
+        List<MahoutDataModel> list = userService.getDataModel();
+        if (list != null) {
+            return R.ok().data("list", list);
+        }
+        return R.error().message("暂无记录");
+    }
+
+
+
 
 
 }

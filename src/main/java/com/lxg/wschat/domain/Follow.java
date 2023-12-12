@@ -39,6 +39,9 @@ public class Follow implements Serializable {
     @TableLogic
     private Integer isDeleted;
 
+
+    private Integer score;
+
     /**
      * 创建时间
      */
@@ -69,6 +72,7 @@ public class Follow implements Serializable {
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
             && (this.getUserId() == null ? other.getUserId() == null : this.getUserId().equals(other.getUserId()))
             && (this.getFriendId() == null ? other.getFriendId() == null : this.getFriendId().equals(other.getFriendId()))
+                && (this.getScore() == null ? other.getScore() == null : this.getScore().equals(other.getScore()))
             && (this.getIsDeleted() == null ? other.getIsDeleted() == null : this.getIsDeleted().equals(other.getIsDeleted()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
             && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()));
@@ -81,6 +85,7 @@ public class Follow implements Serializable {
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
         result = prime * result + ((getUserId() == null) ? 0 : getUserId().hashCode());
         result = prime * result + ((getFriendId() == null) ? 0 : getFriendId().hashCode());
+        result = prime * result + ((getScore() == null) ? 0 : getScore().hashCode());
         result = prime * result + ((getIsDeleted() == null) ? 0 : getIsDeleted().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
@@ -96,6 +101,7 @@ public class Follow implements Serializable {
         sb.append(", id=").append(id);
         sb.append(", userId=").append(userId);
         sb.append(", friendId=").append(friendId);
+        sb.append(", score=").append(score);
         sb.append(", isDeleted=").append(isDeleted);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);
