@@ -41,17 +41,15 @@ import java.util.stream.Collectors;
  * @since 2023/12/11
  */
 public class TestUserMahout {
-    @Autowired
-    static
-    UserService userService;
 
 
 
-    public static void main(String[] args) {
-//        File file = new File("D:\\testMahout.txt");
+
+    public static void main(String[] args) throws IOException {
+        File file = new File("D:\\testMahout.txt");
         // 实例化DataModel并将数据传入其内
         DataModel dataModel = null;
-        //            dataModel = new FileDataModel(file);
+                    dataModel = new FileDataModel(file);
 //        List<MahoutDataModel> list = userService.getDataModel();
 //        dataModel = buildJdbcDataModel(list);
         //余弦相似度
@@ -63,8 +61,8 @@ public class TestUserMahout {
             UserSimilarity userSimilarity2 = new PearsonCorrelationSimilarity(dataModel);
 
             //阈值相似度
-            UserNeighborhood userNeighborhood = new ThresholdUserNeighborhood(0.3, userSimilarity, dataModel);
-//            UserNeighborhood userNeighborhood = new NearestNUserNeighborhood(2,userSimilarity2,dataModel);
+//            UserNeighborhood userNeighborhood = new ThresholdUserNeighborhood(0.3, userSimilarity, dataModel);
+            UserNeighborhood userNeighborhood = new NearestNUserNeighborhood(2,userSimilarity2,dataModel);
             // 构建推荐器，使用基于用户的协同过滤推荐
             Recommender recommender = new GenericUserBasedRecommender(dataModel, userNeighborhood, userSimilarity);
             //从数据模型中获取所有用户的ID迭代器

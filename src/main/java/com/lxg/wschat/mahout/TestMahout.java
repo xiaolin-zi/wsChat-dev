@@ -57,13 +57,13 @@ public class TestMahout {
         }
         long start = System.currentTimeMillis();
         try {
-            recommendedItemList = recommender.recommendedBecause(5, 1, 3);
+            recommendedItemList = recommender.recommendedBecause(5, 1, 10);
         } catch (TasteException e) {
             e.printStackTrace();
         }
 
         System.out.println("使用基于物品的协同过滤算法");
-        System.out.println("根据用户5当前浏览的商品1，推荐3个相似的商品");
+        System.out.println("根据用户5当前浏览的商品1，推荐10个相似的商品");
         for (RecommendedItem recommendedItem : recommendedItemList) {
             System.out.println(recommendedItem);
         }

@@ -26,4 +26,12 @@ export default {
             method: 'get',
         })
     },
+
+    //获取推荐群列表
+    getRecommendGroupList() {
+        return request({
+            url: `/group/recommendGroup`,
+            method: 'get',
+        })
+    },
 }

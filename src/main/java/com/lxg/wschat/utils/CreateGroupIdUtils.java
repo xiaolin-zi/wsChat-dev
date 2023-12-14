@@ -3,6 +3,7 @@
  */
 package com.lxg.wschat.utils;
 
+import java.util.Random;
 import java.util.UUID;
 
 /**
@@ -13,7 +14,12 @@ import java.util.UUID;
  */
 
 public class CreateGroupIdUtils {
-    public static String createGroupId() {
-       return "GP"+ UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    public static Long createGroupId() {
+        Random random = new java.util.Random();
+        String nanoRandom = System.nanoTime() + "" + random.nextInt(99999);
+        int hash = Math.abs(UUID.randomUUID().hashCode());
+        int needAdd = 19 - String.valueOf(hash).length() + 1;
+        return Long.valueOf(hash + "" + nanoRandom.substring(needAdd));
     }
+
 }

@@ -4,6 +4,7 @@ import com.lxg.wschat.domain.Group;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lxg.wschat.domain.User;
 import com.lxg.wschat.dto.GroupDTO;
+import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.vo.GroupInfoVO;
 import com.lxg.wschat.vo.UserInfoVO;
 
@@ -32,4 +33,8 @@ public interface GroupService extends IService<Group> {
     boolean removeGroup(String groupId, HttpServletRequest request);
 
     long getGroupMemberCount(String groupId);
+
+    List<MahoutDataModel> getGroupDataModel();
+
+    List<GroupInfoVO> recommendGroup(HttpServletRequest request);
 }

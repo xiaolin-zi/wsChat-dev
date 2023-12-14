@@ -136,7 +136,9 @@ public class WebSocketServerToken {
                 Session toSession = sessionMap.get(users.get(i));
                 if (toSession != null) {
                     this.sendMessage(obj.toString(), toSession);
-                    log.info("服务器发送消息给用户ID为={}，消息：{}", users.get(i), obj.toString());
+                    if(!obj.getStr("contentType").equals("ping")){
+                        log.info("服务器发送消息给用户ID为={}，消息：{}", users.get(i), obj.toString());
+                    }
                 } else {
                     log.info("发送失败，用户ID为={}未在线", users.get(i));
                 }

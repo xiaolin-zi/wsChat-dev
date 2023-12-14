@@ -3,17 +3,14 @@
  */
 package com.lxg.wschat.controller;
 
-import com.lxg.wschat.dto.GetChatRecordsDTO;
 import com.lxg.wschat.dto.MessageDTO;
 import com.lxg.wschat.dto.MessageRedisDTO;
 import com.lxg.wschat.service.MessageService;
 import com.lxg.wschat.service.UserService;
-import com.lxg.wschat.utils.JwtUtils;
 import com.lxg.wschat.utils.R;
 import com.lxg.wschat.vo.MessageDetialInfoVO;
 import com.lxg.wschat.vo.MessageInfoVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,6 +79,13 @@ public class MessageController {
         }
         return R.error().message("新增会话记录到redis失败");
     }
+
+
+
+
+
+
+
 
     /**
      * 根据acceptId和type获取详细聊天记录

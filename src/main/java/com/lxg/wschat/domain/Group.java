@@ -20,7 +20,7 @@ public class Group implements Serializable {
     /**
      * 主键id
      */
-    @TableId(type = IdType.INPUT)
+    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**

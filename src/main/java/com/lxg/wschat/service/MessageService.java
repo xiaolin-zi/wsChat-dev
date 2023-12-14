@@ -24,6 +24,7 @@ public interface MessageService extends IService<Message> {
 
     List<MessageInfoVO> getMessageList(HttpServletRequest request);
 
+
     List<MessageDetialInfoVO> getChatRecord(HttpServletRequest request, String acceptId,Integer type);
 
     Map<String,List<MessageDetialInfoVO>> getAllChatRecords(HttpServletRequest request);
@@ -32,4 +33,5 @@ public interface MessageService extends IService<Message> {
     boolean addMessageToRedis(MessageRedisDTO messageRedisDTO);
 
     void saveAll(List<Message> allMessage);
+
 }

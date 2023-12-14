@@ -5,6 +5,7 @@ package com.lxg.wschat.controller;
 
 import com.lxg.wschat.domain.Group;
 import com.lxg.wschat.domain.User;
+import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.service.GroupService;
 import com.lxg.wschat.utils.R;
 import com.lxg.wschat.dto.AddGroupMemberDTO;
@@ -144,4 +145,29 @@ public class GroupController {
         return R.ok().data("count", count);
     }
 
+
+    /**
+     * 查询群聊得分情况记录
+     */
+    @GetMapping("/getGroupDataModel")
+    public R getGroupScore() {
+        List<MahoutDataModel> list = groupService.getGroupDataModel();
+        if (list != null) {
+            return R.ok().data("list", list);
+        }
+        return R.error().message("暂无记录");
+    }
+
+
+    /**
+     * 推荐群聊
+     */
+    @GetMapping("/recommendGroup")
+    public R recommendGroup(HttpServletRequest request) {
+        List<GroupInfoVO> list = groupService.recommendGroup(request);
+        if (list != null) {
+            return R.ok().data("list", list);
+        }
+        return R.error().message("暂无记录");
+    }
 }

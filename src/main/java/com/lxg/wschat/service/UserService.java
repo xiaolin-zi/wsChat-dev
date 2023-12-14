@@ -49,4 +49,14 @@ public interface UserService extends IService<User> {
 
 
     List<MahoutDataModel> getDataModel();
+
+
+    List<UserInfoVO> recommend(HttpServletRequest request);
+
+    void importFlow(List<String> userIds, String userId);
+
+    void importGroup(List<String> groupIds, String userId);
+
+
+    boolean exitGroup(String groupId, HttpServletRequest request);
 }

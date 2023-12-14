@@ -27,8 +27,20 @@
                 <div style="margin-left: 15px;">
                   <p style="font-size: 14px;margin-top: 0px;margin-bottom: 0px;">{{ item.name }}<span
                       v-if="item.type==2" style="color: #8a8282">[群聊]</span></p>
-                  <p style="font-size: 10px;margin: 0px;margin-top: 4px;color:#a19f9f;" class="text-overflow">
-                    {{ item.lastMess }}
+                  <!--                  <p style="font-size: 10px;margin: 0px;margin-top: 4px;color:#a19f9f;" class="text-overflow">-->
+                  <!--                    {{ item.lastMess }}-->
+                  <!--                  </p>-->
+                  <!--聊天记录如果有，显示最后一条-->
+                  <!--另外，如果最后一条消息是图片，显示[图片]，如果是文字，显示文字-->
+                  <p v-if="allChatRecords[item.acceptId+'type-'+item.type] && allChatRecords[item.acceptId+'type-'+item.type][allChatRecords[item.acceptId+'type-'+item.type].length-1].contentType == 'image'  "
+                     style="font-size: 10px;margin: 0px;margin-top: 4px;color:#a19f9f;" class="text-overflow">
+                    [图片]
+                  </p>
+                  <p v-if="allChatRecords[item.acceptId+'type-'+item.type] && allChatRecords[item.acceptId+'type-'+item.type][allChatRecords[item.acceptId+'type-'+item.type].length-1].contentType !== 'image' "
+                     style="font-size: 10px;margin: 0px;margin-top: 4px;color:#a19f9f;" class="text-overflow">
+                    {{
+                      allChatRecords[item.acceptId + 'type-' + item.type][allChatRecords[item.acceptId + 'type-' + item.type].length - 1].content
+                    }}
                   </p>
                 </div>
                 <div style="position: sticky;left: 200px">
@@ -62,6 +74,11 @@
                 <div style="margin-left: 15px;">
                   <p style="font-size: 14px;color: black">{{ item.nickname }}</p>
                 </div>
+                <div style="position: sticky;left: 200px">
+                  <el-button size="small" @click="unfollowUser(item.id)" style="background-color: rgb(121, 180, 235)">
+                    互相⇋关注
+                  </el-button>
+                </div>
               </div>
 
             </el-card>
@@ -89,6 +106,9 @@
                 <div style="margin-left: 15px;">
                   <p style="font-size: 14px;color: black">{{ item.name }}<span
                       style="color: #8a8282">({{ item.memberCount }})</span></p>
+                </div>
+                <div style="position: sticky;left: 200px">
+                  <el-button size="small" @click="exitGroup(item.id)">退出群聊</el-button>
                 </div>
               </div>
 
@@ -121,7 +141,7 @@
                   <p style="font-size: 14px;color: #ff6200">{{ item.nickname }}</p>
                 </div>
                 <div style="position: sticky;left: 200px">
-                  <el-button size="small">关注</el-button>
+                  <el-button size="small" @click="followUser(item.id)">关注</el-button>
                 </div>
               </div>
 
@@ -132,7 +152,7 @@
     </div>
 
     <!--聊天框-->
-    <div v-if="myaction == 'tochat'" class="mess_dialog">
+    <div v-if="acceptUser.name !== ''" class="mess_dialog">
       <!--对话框头部-->
       <div class="dlog_header">
         <el-avatar shape="square" :size="35" v-if="acceptUser.avatar !== '' & acceptUser.avatar !== undefined"
@@ -155,13 +175,17 @@
             </div>
             <div class="mess_other">
               <div>
-                <span style="font-size: 8px;">{{ acceptUser.name }}   {{ formatDate(item.sendTime) }}</span>
+                <span style="font-size: 8px;color: red" v-if="item.sendId==1">{{
+                    formatDate(item.sendTime)
+                  }}   {{ item.sendNickname }}</span>
+                <span style="font-size: 8px;" v-else>{{ formatDate(item.sendTime) }}   {{ item.sendNickname }}</span>
               </div>
               <div v-if="item.contentType === 'image'" class="img_left">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
               <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
-                <span class="mess_content_msg">{{ item.content }}</span>
+                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500">{{ item.content }}</span>
+                <span class="mess_content_msg" v-else>{{ item.content }}</span>
               </div>
             </div>
           </div>
@@ -175,13 +199,17 @@
             </div>
             <div class="mess_other">
               <div>
-                <span style="font-size: 8px;">{{ item.sendNickname }}   {{ formatDate(item.sendTime) }}</span>
+                <span style="font-size: 8px;color: red" v-if="item.sendId==1">{{
+                    formatDate(item.sendTime)
+                  }}   {{ item.sendNickname }}</span>
+                <span style="font-size: 8px;" v-else>{{ formatDate(item.sendTime) }}   {{ item.sendNickname }}</span>
               </div>
               <div v-if="item.contentType === 'image'" class="img_left">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
               <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
-                <span class="mess_content_msg">{{ item.content }}</span>
+                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500">{{ item.content }}</span>
+                <span class="mess_content_msg" v-else>{{ item.content }}</span>
               </div>
             </div>
           </div>
@@ -189,13 +217,17 @@
           <div v-else-if="item.sendId === userInfo.id " class="content_me">
             <div class="mess_me">
               <div>
-                <span style="font-size: 8px;">{{ formatDate(item.sendTime) }}   {{ item.sendNickname }}</span>
+                <span style="font-size: 8px;color: red" v-if="item.sendId==1">{{
+                    formatDate(item.sendTime)
+                  }}   {{ item.sendNickname }}</span>
+                <span style="font-size: 8px;" v-else>{{ formatDate(item.sendTime) }}   {{ item.sendNickname }}</span>
               </div>
               <div v-if="item.contentType === 'image'" class="img">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
               <div v-else class="content_me_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
-                <span class="mess_content_msg">{{ item.content }}</span>
+                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500">{{ item.content }}</span>
+                <span class="mess_content_msg" v-else>{{ item.content }}</span>
               </div>
             </div>
             <div>
@@ -253,11 +285,15 @@
     </div>
 
     <!--添加好友框-->
-    <div v-if="myaction == 'toadd'" class="mess_dialog">
+    <div v-else-if="myaction == 'add'" class="mess_dialog">
       <div style="margin-top: 20px">
         <el-input></el-input>
         <el-button type="primary">搜索</el-button>
       </div>
+    </div>
+    <!--其他显示-->
+    <div v-else class="mess_dialog_false">
+      <span>欢迎来到tobeyou聊天室，开始你的探索吧！</span>
     </div>
 
     <!--发送图片dialog-->
@@ -307,31 +343,10 @@ export default {
       friendList: [],//好友列表
       groupList: [],//群组列表
       chatRecordsList: [],//消息列表
-      myaction: 'tochat',
+      myaction: '',
       tabName: 'chat',//tab选中名称
       selectedItem: null,//选中
-      RecommendUserList: [
-        {
-          userId: 1,
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',//用户头像
-          nickname: '小林'
-        },
-        {
-          userId: 1,
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',//用户头像
-          nickname: '小林'
-        },
-        {
-          userId: 1,
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',//用户头像
-          nickname: '小林'
-        },
-        {
-          userId: 1,
-          avatar: 'https://img.yzcdn.cn/vant/cat.jpeg',//用户头像
-          nickname: '小林'
-        }
-      ],//推荐用户列表
+      RecommendUserList: [],//推荐用户列表
       isShowDialog: false, // 发送图片预览dialog
       imageUrl: '', // 预览图
       files: {}, // 发送的文件
@@ -345,10 +360,10 @@ export default {
       userInfo: {},//用户信息
       //接收者对象
       acceptUser: {
-        name: '等待连线', // 对话的用户名或群名
+        name: '', // 对话的用户名或群名
         userId: '', // 对话用户的id
         type: '', // 对话用户类型(个人、群)
-        avatar: 'https://img.yzcdn.cn/vant/cat.jpeg', // 对话用户头像
+        avatar: '', // 对话用户头像
       },
       isShow_rightMenu_mess_content: false,//右键菜单-聊天内容复制
       rightMenu_mess_content_top: 0,
@@ -389,8 +404,80 @@ export default {
     }
   },
   methods: {
+    //退出群聊
+    exitGroup(id) {
+      //提示
+      this.$confirm('确定要退出该群聊吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        userApi.quitGroup(id).then((res) => {
+          if (res.data.code === 20000) {
+            this.$message.success('退出成功');
+            //刷新群组列表
+            this.getGroups();
+          } else {
+            this.$message.error(res.data.message);
+          }
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消退出'
+        });
+      });
+    },
+    //关注用户
+    followUser(id) {
+      //提示
+      this.$confirm('是否关注该用户?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        userApi.followUser(id).then((res) => {
+          if (res.data.code === 20000) {
+            this.$message.success('关注成功');
+            //刷新推荐列表
+            this.getRecommend();
+          } else {
+            this.$message.error(res.data.message);
+          }
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消关注'
+        });
+      });
 
+    },
+    //取关用户
+    unfollowUser(id) {
+      //提示
+      this.$confirm('确定要取关该用户吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        userApi.unFollow(id).then((res) => {
+          if (res.data.code === 20000) {
+            this.$message.success('取关成功');
+            //刷新好友列表
+            this.getFriends();
+          } else {
+            this.$message.error(res.data.message);
+          }
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消取关'
+        });
+      });
 
+    },
     filterSensitiveWords(text) {
       for (var i = 0; i < this.sensitiveWords.length; i++) {
         //构造正则表达式，g表示全局匹配，i表示不区分大小写
@@ -474,10 +561,67 @@ export default {
     handleClick(tab, event) {
       // console.log(tab, event);
       if (tab.name == 'add') {
+        if (this.myaction != "add") {
+          //将acceptUser置空
+          this.acceptUser = {
+            name: '', // 对话的用户名或群名
+            userId: '', // 对话用户的id
+            type: '', // 对话用户类型(个人、群)
+            avatar: '', // 对话用户头像
+          }
+          console.log(this.acceptUser);
+        }
         // 触发‘添加好友’事件
         this.addFriend();
+        //查询推荐列表
+        this.getRecommend();
       } else if (tab.name == 'chat') {
+        if (this.myaction != "chat") {
+          //将acceptUser置空
+          this.acceptUser = {
+            name: '', // 对话的用户名或群名
+            userId: '', // 对话用户的id
+            type: '', // 对话用户类型(个人、群)
+            avatar: '', // 对话用户头像
+          }
+        }
         this.toChat();
+      } else if (tab.name == 'friend') {
+        if (this.myaction != "friend") {
+          //将acceptUser置空
+          this.acceptUser = {
+            name: '', // 对话的用户名或群名
+            userId: '', // 对话用户的id
+            type: '', // 对话用户类型(个人、群)
+            avatar: '', // 对话用户头像
+          }
+        }
+        this.toFriends();
+      } else if (tab.name == 'group') {
+        if (this.myaction != "group") {
+          //将acceptUser置空
+          this.acceptUser = {
+            name: '', // 对话的用户名或群名
+            userId: '', // 对话用户的id
+            type: '', // 对话用户类型(个人、群)
+            avatar: '', // 对话用户头像
+          }
+        }
+        this.toGroups();
+      }
+    },
+    toGroups() {
+      this.myaction = 'group';
+      //如果群组列表为空，进行初始化
+      if (this.groupList.length === 0) {
+        this.getGroups();
+      }
+    },
+    toFriends() {
+      this.myaction = 'friend';
+      //如果好友列表为空，进行初始化
+      if (this.friendList.length === 0) {
+        this.getFriends();
       }
     },
     toChat() {
@@ -498,7 +642,7 @@ export default {
         }
         // 获取聊天记录
         // this.getChatRecords()
-        this.chatRecordsList = this.allChatRecords[item.acceptId];
+        this.chatRecordsList = this.allChatRecords[item.acceptId + "type-" + item.type];
         //将对应的会话聊天记录中的图片url放入imgNowList
         this.chatRecordsList.forEach((item) => {
           if (item.contentType === 'image') {
@@ -519,7 +663,10 @@ export default {
         }
         // 获取聊天记录
         // this.getChatRecords()
-        this.chatRecordsList = this.allChatRecords[item.id];
+        // console.log(item);
+        this.chatRecordsList = this.allChatRecords[item.id + "type-" + 1];
+        // console.log(item.id);
+        // console.log(this.allChatRecords);
       } else if (type == '群组列表') {
         // alert('群组列表')
         this.acceptUser = {
@@ -528,12 +675,15 @@ export default {
           type: 2, // 对话用户类型(个人、群)
           avatar: item.avatar, // 对话用户头像
         }
+        // console.log(item);
+
         // 获取聊天记录
         // this.getChatRecords()
-        this.chatRecordsList = this.allChatRecords[item.id];
+        this.chatRecordsList = this.allChatRecords[item.id + "type-" + 2];
         this.getGroupMembers();
       } else if (type == '添加好友') {
         // alert('添加好友')
+
       }
       this.selectedItem = item;
     },
@@ -581,43 +731,43 @@ export default {
       /** 接收类型-聊天内容 */
       if (obj.contentType === 'message' || obj.contentType === 'image') {
         //现在能收到消息，说明在线，需要实时将最后一条消息更新到会话列表
-        this.updateLastMess(obj);
+        // this.updateLastMess(obj);
 
         if (obj.acceptId !== this.userInfo.id) {
           // console.log(obj.accept_id)
           // 强制刷新
           this.$forceUpdate()
           // 判断是否和该对象的聊天内容为空，如果是需要初始化一下
-          if (!this.allChatRecords[obj.acceptId]) {
-            this.allChatRecords[obj.acceptId] = [];
-            this.allChatRecords[obj.acceptId].push(obj);
-            if (this.acceptUser.userId === obj.acceptId) {
-              this.chatRecordsList = this.allChatRecords[obj.acceptId]
+          if (!this.allChatRecords[obj.acceptId + "type-" + obj.type]) {
+            this.allChatRecords[obj.acceptId + "type-" + obj.type] = [];
+            this.allChatRecords[obj.acceptId + "type-" + obj.type].push(obj);
+            if (this.acceptUser.userId === obj.acceptId && this.acceptUser.type === obj.type) {
+              this.chatRecordsList = this.allChatRecords[obj.acceptId + "type-" + obj.type]
             }
           } else {
-            this.allChatRecords[obj.acceptId].push(obj)
+            this.allChatRecords[obj.acceptId + "type-" + obj.type].push(obj)
           }
         } else {
           // 强制刷新
           this.$forceUpdate()
           // 判断是否和该对象的聊天内容为空，如果是需要初始化一下
-          if (!this.allChatRecords[obj.sendId]) {
-            this.allChatRecords[obj.sendId] = [];
-            this.allChatRecords[obj.sendId].push(obj);
-            if (this.acceptUser.userId === obj.sendId) {
-              this.chatRecordsList = this.allChatRecords[obj.sendId]
+          if (!this.allChatRecords[obj.sendId + "type-" + obj.type]) {
+            this.allChatRecords[obj.sendId + "type-" + obj.type] = [];
+            this.allChatRecords[obj.sendId + "type-" + obj.type].push(obj);
+            if (this.acceptUser.userId === obj.sendId && this.acceptUser.type === obj.type) {
+              this.chatRecordsList = this.allChatRecords[obj.sendId + "type-" + obj.type]
             }
           } else {
-            this.allChatRecords[obj.sendId].push(obj)
+            this.allChatRecords[obj.sendId + "type-" + obj.type].push(obj)
           }
         }
       }
     },
     //更新会话列表的最后一条消息
-    updateLastMess(obj){
+    updateLastMess(obj) {
       console.log(this.messageList)
       this.messageList.forEach((item) => {
-        if (item.acceptId === obj.acceptId) {
+        if (item.acceptId === obj.acceptId && item.type === obj.type) {
           if (obj.contentType === 'image') {
             item.lastMess = '[图片]';
           } else {
@@ -783,6 +933,7 @@ export default {
             ids.push(item.id)
           })
         }
+
         let obj = JSON.stringify({
           sendId: this.userInfo.id,
           type: this.acceptUser.type,
@@ -812,97 +963,108 @@ export default {
         }
         //如果没有，就添加一条
         if (!isHave) {
-          let obj = {
-            userId: this.userInfo.id,
-            acceptId: this.acceptUser.userId,
-            avatar: this.acceptUser.avatar,
-            name: this.acceptUser.name,
-            type: this.acceptUser.type,
-            lastMess: lastMess,
-            lastTime: moment().format('MM-DD'),
-          }
-          this.messageList.push(obj)
-          //保存到redis
-          MessageApi.saveMessageToRedis(obj).then((res) => {
-            // console.log(res);
-          })
-          //对方的会话列表也要添加一条
-          let obj2 = {
-            userId: this.acceptUser.userId,
-            acceptId: this.userInfo.id,
-            avatar: this.userInfo.avatar,
-            name: this.userInfo.nickname,
-            type: 1,
-            lastMess: lastMess,
-            lastTime: moment().format('MM-DD'),
-          }
-          MessageApi.saveMessageToRedis(obj2).then((res) => {
-            // console.log(res);
-          })
-        } else {
-          //如果有，就更新一条
-          let obj = {
-            userId: this.userInfo.id,
-            acceptId: this.acceptUser.userId,
-            avatar: this.acceptUser.avatar,
-            name: this.acceptUser.name,
-            type: this.acceptUser.type,
-            lastMess: lastMess,
-            lastTime: moment().format('MM-DD'),
-          }
-          this.messageList.forEach((item) => {
-            if (item.acceptId === this.acceptUser.userId) {
-              if (contentType === 'image') {
-                item.lastMess = '[图片]'
-              } else {
-                item.lastMess = this.mess;
-              }
-              item.lastTime = moment().format('MM-DD');
+          if (this.acceptUser.type == 1) {
+            let obj = {
+              userId: this.userInfo.id,
+              acceptId: this.acceptUser.userId,
+              groupUserIds: ids,
+              avatar: this.acceptUser.avatar,
+              name: this.acceptUser.name,
+              type: this.acceptUser.type,
+              lastMess: lastMess,
+              lastTime: moment().format('MM-DD'),
             }
-          })
-          //保存到redis
-          MessageApi.saveMessageToRedis(obj).then((res) => {
-            // console.log(res);
-          })
-          //对方的会话列表也要更新一条
-          let obj2 = {
-            userId: this.acceptUser.userId,
-            acceptId: this.userInfo.id,
-            avatar: this.userInfo.avatar,
-            name: this.userInfo.nickname,
-            type: 1,
-            lastMess: lastMess,
-            lastTime: moment().format('MM-DD'),
-          }
-          MessageApi.saveMessageToRedis(obj2).then((res) => {
-            // console.log(res);
-          })
-
-          //如果是群聊，还要更新群聊里每个人的会话列表
-          if (this.acceptUser.type === 2) {
-            this.groupMembers.forEach((item) => {
-              let obj = {
-                userId: item.id,
-                acceptId: this.acceptUser.userId,
-                avatar: this.acceptUser.avatar,
-                name: this.acceptUser.name,
-                type: this.acceptUser.type,
-                lastMess: lastMess,
-                lastTime: moment().format('MM-DD'),
-              }
-              MessageApi.saveMessageToRedis(obj).then((res) => {
-                // console.log(res);
-              })
+            this.messageList.push(obj)
+            console.log(obj);
+            //保存到redis
+            MessageApi.saveMessageToRedis(obj).then((res) => {
+              // console.log(res);
+            })
+            // 对方的会话列表也要添加一条
+            let obj2 = {
+              userId: this.acceptUser.userId,
+              acceptId: this.userInfo.id,
+              avatar: this.userInfo.avatar,
+              name: this.userInfo.nickname,
+              type: this.acceptUser.type,
+              lastMess: lastMess,
+              lastTime: moment().format('MM-DD'),
+            }
+            MessageApi.saveMessageToRedis(obj2).then((res) => {
+              // console.log(res);
+            })
+          } else {
+            let obj = {
+              userId: this.userInfo.id,
+              acceptId: this.acceptUser.userId,
+              groupUserIds: ids,
+              avatar: this.acceptUser.avatar,
+              name: this.acceptUser.name,
+              type: this.acceptUser.type,
+              lastMess: lastMess,
+              lastTime: moment().format('MM-DD'),
+            }
+            this.messageList.push(obj)
+            //保存到redis
+            MessageApi.saveMessageToRedis(obj).then((res) => {
+              // console.log(res);
             })
           }
-
         }
+        // else {
+        //   //如果有，就更新一条
+        //   this.messageList.forEach((item) => {
+        //     if (item.acceptId === this.acceptUser.userId && item.type === this.acceptUser.type) {
+        //       if (contentType === 'image') {
+        //         item.lastMess = '[图片]'
+        //       } else {
+        //         item.lastMess = this.mess;
+        //       }
+        //       item.lastTime = moment().format('MM-DD');
+        //     }
+        //   })
+        //   let obj = {
+        //     userId: this.userInfo.id,
+        //     acceptId: this.acceptUser.userId,
+        //     groupUserIds: ids,
+        //     avatar: this.acceptUser.avatar,
+        //     name: this.acceptUser.name,
+        //     type: this.acceptUser.type,
+        //     lastMess: lastMess,
+        //     lastTime: moment().format('MM-DD'),
+        //   }
+        //
+        //   //保存到redis
+        //   MessageApi.saveMessageToRedis(obj).then((res) => {
+        //     // console.log(res);
+        //   })
+        //   //对方的会话列表也要更新一条
+        //   let obj2 = {
+        //     userId: this.acceptUser.userId,
+        //     acceptId: this.userInfo.id,
+        //     avatar: this.userInfo.avatar,
+        //     name: this.userInfo.nickname,
+        //     type: this.acceptUser.type,
+        //     lastMess: lastMess,
+        //     lastTime: moment().format('MM-DD'),
+        //   }
+        //   MessageApi.saveMessageToRedis(obj2).then((res) => {
+        //     // console.log(res);
+        //   })
+        // }
 
         // 发送完消息，清空输入框
         this.mess = ''
       }
     },
 
+    getRecommend() {
+      console.log("获取推荐用户列表")
+      userApi.getRecommendUserList().then((res) => {
+        this.RecommendUserList = res.data.data.list;
+        console.log(res);
+      })
+    }
   }
 
 }
@@ -948,6 +1110,15 @@ export default {
   box-shadow: 0 0 10px #9b9393;
   background-color: white;
   display: flex;
+}
+
+.mess_dialog_false {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  line-height: 600px;
+  background: #fbfcfc;
+  font-size: 24px;
 }
 
 .mess_dialog {
@@ -1342,4 +1513,5 @@ export default {
 .rightMenu_mess_content_card_item {
   border-bottom: solid 1px #eeeded;
 }
+
 </style>

@@ -7,6 +7,7 @@ import com.lxg.wschat.utils.R;
 import com.lxg.wschat.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -113,6 +114,7 @@ public class UserController {
     }
 
 
+
     /**
      * 加入群聊
      * @param groupId
@@ -128,6 +130,17 @@ public class UserController {
         return R.error().message("加入群聊失败");
     }
 
+    /**
+     * 退出群聊
+     */
+    @DeleteMapping("/exitGroup/{groupId}")
+    public R exitGroup(@PathVariable String groupId, HttpServletRequest request) {
+        boolean flag = userService.exitGroup(groupId, request);
+        if (flag) {
+            return R.ok().message("退出群聊成功");
+        }
+        return R.error().message("退出群聊失败");
+    }
 
     /**
      * 获取粉丝列表
@@ -158,7 +171,7 @@ public class UserController {
     }
 
     /**
-     * 查询用户和群组的得分情况记录
+     * 查询用户得分情况记录
      */
     @GetMapping("/getDataModel")
     public R getScore() {
@@ -169,6 +182,18 @@ public class UserController {
         return R.error().message("暂无记录");
     }
 
+
+    /**
+     * 给用户推荐好友
+     */
+    @GetMapping("/recommend")
+    public R recommend(HttpServletRequest request) {
+        List<UserInfoVO> list = userService.recommend(request);
+        if (list != null && list.size() > 0) {
+            return R.ok().data("list", list);
+        }
+        return R.error().message("暂无可推荐好友");
+    }
 
 
 

@@ -4,9 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lxg.wschat.domain.Follow;
+import com.lxg.wschat.domain.Message;
+import com.lxg.wschat.domain.MessageDetail;
 import com.lxg.wschat.domain.User;
 import com.lxg.wschat.domain.UserGroup;
 import com.lxg.wschat.mahout.MahoutDataModel;
+import com.lxg.wschat.mahout.MyRecommender;
+import com.lxg.wschat.mahout.RecommenderConstants;
+import com.lxg.wschat.service.MessageDetailService;
+import com.lxg.wschat.service.MessageService;
 import com.lxg.wschat.service.UserGroupService;
 import com.lxg.wschat.vo.UserInfoVO;
 import com.lxg.wschat.mapper.UserMapper;
@@ -20,6 +26,17 @@ import com.lxg.wschat.dto.LoginByEmailForm;
 import com.lxg.wschat.dto.LoginDTO;
 import com.lxg.wschat.dto.RegisterDTO;
 import com.lxg.wschat.dto.UserDTO;
+import org.apache.mahout.cf.taste.common.Refreshable;
+import org.apache.mahout.cf.taste.common.TasteException;
+import org.apache.mahout.cf.taste.impl.neighborhood.ThresholdUserNeighborhood;
+import org.apache.mahout.cf.taste.impl.recommender.GenericItemBasedRecommender;
+import org.apache.mahout.cf.taste.impl.recommender.GenericUserBasedRecommender;
+import org.apache.mahout.cf.taste.model.DataModel;
+import org.apache.mahout.cf.taste.neighborhood.UserNeighborhood;
+import org.apache.mahout.cf.taste.recommender.RecommendedItem;
+import org.apache.mahout.cf.taste.recommender.Recommender;
+import org.apache.mahout.cf.taste.similarity.ItemSimilarity;
+import org.apache.mahout.cf.taste.similarity.UserSimilarity;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -28,6 +45,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -38,7 +56,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author linxugeng
@@ -55,7 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     TemplateEngine templateEngine;
     @Qualifier("myRedisTemplate")
     @Autowired
-    private RedisTemplate<String,Object> redisTemplate;
+    private RedisTemplate<String, Object> redisTemplate;
     @Autowired
     private JavaMailSender mailSender;
     // 发送邮件的邮箱
@@ -72,12 +92,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private UserGroupService userGroupService;
 
+    @Autowired
+    private MessageDetailService messageDetailService;
+
+    @Autowired
+    private MessageService messageService;
+
     /**
      * 登录
      *
      * @param loginDTO
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public String login(LoginDTO loginDTO) {
         // 获取登录账号和密码
@@ -107,6 +134,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param registerDTO
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public R registerUser(RegisterDTO registerDTO) {
         // 获取账号、密码、昵称、邮箱、验证码
@@ -167,6 +195,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param email
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean sendMail(String email) {
         // 从redis获取验证码
@@ -205,6 +234,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public R loginByCode(LoginByEmailForm form) {
         String email = form.getEmail();
         String code = form.getCode();
@@ -235,6 +265,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public UserInfoVO getUserInfo(HttpServletRequest request) {
         //调用jwt工具类的方法，根据request对象获取头信息，返回用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
@@ -246,6 +277,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean addUser(User user) {
         int insert = baseMapper.insert(user);
         if (insert > 0) {
@@ -255,6 +287,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean unfollowUser(String userId, HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
@@ -267,6 +300,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateUserInfo(UserDTO user, HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
@@ -281,6 +315,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<UserInfoVO> getFollowList(HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
@@ -301,18 +336,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean joinGroup(String groupId, HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
         UserGroup userGroup = new UserGroup();
         userGroup.setUserId(memberId);
         userGroup.setGroupId(groupId);
+        //查询用户是否已经加入该群聊
+        QueryWrapper<UserGroup> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", memberId);
+        wrapper.eq("group_id", groupId);
+        UserGroup userGroup1 = userGroupService.getOne(wrapper);
+        if (userGroup1 != null) {
+            return false;
+        }
         //插入群聊记录
         boolean insert = userGroupService.save(userGroup);
         return insert;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<UserInfoVO> getFansList(HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
@@ -333,6 +378,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<UserInfoVO> getFriendList(HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
@@ -360,13 +406,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<MahoutDataModel> getDataModel() {
-        //查用户关注表和用户所在群组表
+        List<MahoutDataModel> list = new ArrayList<>();
+        //查用户关注表
         QueryWrapper<Follow> wrapper = new QueryWrapper<>();
         List<Follow> followList = followService.list(wrapper);
-        QueryWrapper<UserGroup> wrapper1 = new QueryWrapper<>();
-        List<UserGroup> userGroupList = userGroupService.list(wrapper1);
-        List<MahoutDataModel> list = new ArrayList<>();
         for (Follow follow : followList) {
             MahoutDataModel mahoutDataModel = new MahoutDataModel();
             mahoutDataModel.setUserId(Long.valueOf(follow.getUserId()));
@@ -375,24 +420,198 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             list.add(mahoutDataModel);
         }
 
-        for (UserGroup userGroup : userGroupList) {
+        QueryWrapper<MessageDetail> wrapper2 = new QueryWrapper<>();
+        List<MessageDetail> messageDetailList = messageDetailService.list(wrapper2);
+
+        for (MessageDetail messageDetail : messageDetailList) {
+            if(messageDetail.getScore()==null){
+                continue;
+            }
+            if(messageDetail.getType()==2){
+                continue;
+            }
             MahoutDataModel mahoutDataModel = new MahoutDataModel();
-            mahoutDataModel.setUserId(Long.valueOf(userGroup.getUserId()));
-            String groupId = userGroup.getGroupId();
-            //去除群聊前缀两个字符GP
-            String substring = groupId.substring(2);
-            mahoutDataModel.setItemId(Long.valueOf(substring));
-            mahoutDataModel.setScore(userGroup.getScore());
+            mahoutDataModel.setUserId(Long.valueOf(messageDetail.getSendId()));
+            mahoutDataModel.setItemId(Long.valueOf(messageDetail.getAcceptId()));
+            mahoutDataModel.setScore(messageDetail.getScore());
             list.add(mahoutDataModel);
         }
+
+
         return list;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<UserInfoVO> recommend(HttpServletRequest request) {
+        Long userId = Long.valueOf(JwtUtils.getMemberIdByRequest(request));
+        List<MahoutDataModel> list = this.getDataModel();
+        try {
+            DataModel dataModel = MyRecommender.buildJdbcDataModel(list);
+            UserSimilarity similarity = (UserSimilarity) MyRecommender.getSimilarity(RecommenderConstants.SIMILARITY_COSINE, dataModel);
+            UserNeighborhood userNeighborhood = new ThresholdUserNeighborhood(0.3, similarity, dataModel);
+//            构建推荐引擎
+            Recommender recommender = new GenericUserBasedRecommender(dataModel, userNeighborhood, similarity);
 
+//             构建推荐器，使用基于物品的协同过滤推荐
+//            ItemSimilarity itemSimilarity = (ItemSimilarity) MyRecommender.getSimilarity(RecommenderConstants.SIMILARITY_COSINE, dataModel);
+//            GenericItemBasedRecommender itemRecommender = new GenericItemBasedRecommender(dataModel, (ItemSimilarity) itemSimilarity);
+
+            //给指定用户推荐5个好友
+            List<RecommendedItem> recommend = recommender.recommend(userId, 5);
+//            List<RecommendedItem> recommend = itemRecommender.recommend(userId, 5);
+            List<Long> collect = recommend.stream().map(RecommendedItem::getItemID).collect(Collectors.toList());
+            List<UserInfoVO> userInfoVOList = new ArrayList<>();
+            for (Long id : collect) {
+                //如果是自己，跳过
+                if (id.equals(userId)) {
+                    continue;
+                }
+                QueryWrapper<User> wrapper = new QueryWrapper<>();
+                wrapper.eq("id", id);
+                User user = baseMapper.selectOne(wrapper);
+                UserInfoVO userInfoVO = new UserInfoVO();
+                BeanUtils.copyProperties(user, userInfoVO);
+                userInfoVOList.add(userInfoVO);
+            }
+
+            //如果推荐的好友不足5个，随机推荐
+            if(userInfoVOList.size()<5){
+                //查询所有没有关注的用户
+                QueryWrapper<Follow> wrapper = new QueryWrapper<>();
+                wrapper.eq("user_id", userId);
+                List<Follow> followList = followService.list(wrapper);
+                List<String> userIdList = new ArrayList<>();
+                for (Follow follow : followList) {
+                    userIdList.add(follow.getFriendId());
+                }
+                userIdList.add(String.valueOf(userId));
+                QueryWrapper<User> wrapper2 = new QueryWrapper<>();
+                wrapper2.notIn("id",userIdList);
+                List<User> userList = baseMapper.selectList(wrapper2);
+                //随机推荐
+                //可以通过随机数来获取用户
+                Random random = new Random();
+                List<UserInfoVO> userInfoVOList2 = new ArrayList<>();
+                while (userInfoVOList.size()<5){
+                    int i = random.nextInt(userList.size());
+                    User user = userList.get(i);
+                    UserInfoVO userInfoVO = new UserInfoVO();
+                    BeanUtils.copyProperties(user, userInfoVO);
+                    userInfoVOList2.add(userInfoVO);
+                    //这是为了去重
+                    userInfoVOList = userInfoVOList2.stream().distinct().collect(Collectors.toList());
+                }
+            }
+            return userInfoVOList;
+        } catch (TasteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importFlow(List<String> userIds, String userId) {
+        for (String id : userIds) {
+            //查询用户是否已经关注
+            QueryWrapper<Follow> wrapper = new QueryWrapper<>();
+            wrapper.eq("user_id", userId);
+            wrapper.eq("friend_id", id);
+            Follow follow1 = followService.getOne(wrapper);
+            if (follow1 != null) {
+                continue;
+            }
+            Follow follow = new Follow();
+            follow.setUserId(userId);
+            follow.setFriendId(id);
+            followService.save(follow);
+
+            //回关
+            QueryWrapper<Follow> wrapper2 = new QueryWrapper<>();
+            wrapper2.eq("user_id", id);
+            wrapper2.eq("friend_id", userId);
+            Follow follow2 = followService.getOne(wrapper2);
+            if (follow2 != null) {
+                continue;
+            }
+            Follow follow3 = new Follow();
+            follow3.setUserId(id);
+            follow3.setFriendId(userId);
+            followService.save(follow3);
+
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importGroup(List<String> groupIds, String userId) {
+        for (String groupId : groupIds) {
+            //查询用户是否已经加入该群聊
+            QueryWrapper<UserGroup> wrapper = new QueryWrapper<>();
+            wrapper.eq("user_id", userId);
+            wrapper.eq("group_id", groupId);
+            UserGroup userGroup1 = userGroupService.getOne(wrapper);
+            if (userGroup1 != null) {
+                continue;
+            }
+            UserGroup userGroup = new UserGroup();
+            userGroup.setUserId(userId);
+            userGroup.setGroupId(groupId);
+            userGroupService.save(userGroup);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public boolean exitGroup(String groupId, HttpServletRequest request) {
+        // 获取当前用户id
+        String memberId = JwtUtils.getMemberIdByRequest(request);
+        UserGroup userGroup = new UserGroup();
+        userGroup.setUserId(memberId);
+        userGroup.setGroupId(groupId);
+        //查询用户是否已经加入该群聊
+        QueryWrapper<UserGroup> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", memberId);
+        wrapper.eq("group_id", groupId);
+        UserGroup userGroup1 = userGroupService.getOne(wrapper);
+        if (userGroup1 == null) {
+            return false;
+        }
+        //删除群聊记录
+        boolean remove = userGroupService.remove(wrapper);
+        //删除该用户在该群聊的会话记录
+        QueryWrapper<Message> wrapper2 = new QueryWrapper<>();
+        wrapper2.eq("accept_id", groupId);
+        wrapper2.eq("user_id", memberId);
+        wrapper2.eq("type", 2);
+        messageService.remove(wrapper2);
+        //也要删除缓存
+        redisTemplate.delete("chatGroupMessage_"+memberId+"to_"+groupId);
+        return remove;
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean followUser(String userId, HttpServletRequest request) {
         // 获取当前用户id
         String memberId = JwtUtils.getMemberIdByRequest(request);
+        //判断用户是否存在
+        QueryWrapper<User> wrapper1 = new QueryWrapper<>();
+        wrapper1.eq("id", userId);
+        User user1 = baseMapper.selectOne(wrapper1);
+        if (user1 == null) {
+            return false;
+        }
+        //判断是否已经关注
+        QueryWrapper<Follow> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", memberId);
+        wrapper.eq("friend_id", userId);
+        Follow follow1 = followService.getOne(wrapper);
+        if (follow1 != null) {
+            return false;
+        }
+
         Follow follow = new Follow();
         follow.setUserId(memberId);
         follow.setFriendId(userId);

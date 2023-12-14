@@ -59,6 +59,10 @@ public class MessageDetail implements Serializable {
      */
     private String content;
 
+
+    private Integer score;
+
+    private Integer type;
     /**
      * 逻辑删除
      */
@@ -100,6 +104,8 @@ public class MessageDetail implements Serializable {
                 && (this.getSendTime() == null ? other.getSendTime() == null : this.getSendTime().equals(other.getSendTime()))
                 && (this.getContentType() == null ? other.getContentType() == null : this.getContentType().equals(other.getContentType()))
                 && (this.getContent() == null ? other.getContent() == null : this.getContent().equals(other.getContent()))
+                && (this.getScore() == null ? other.getScore() == null : this.getScore().equals(other.getScore()))
+                && (this.getType() == null ? other.getType() == null : this.getType().equals(other.getType()))
                 && (this.getIsDeleted() == null ? other.getIsDeleted() == null : this.getIsDeleted().equals(other.getIsDeleted()))
                 && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
                 && (this.getUpdateTime() == null ? other.getUpdateTime() == null : this.getUpdateTime().equals(other.getUpdateTime()));
@@ -117,6 +123,8 @@ public class MessageDetail implements Serializable {
         result = prime * result + ((getSendTime() == null) ? 0 : getSendTime().hashCode());
         result = prime * result + ((getContentType() == null) ? 0 : getContentType().hashCode());
         result = prime * result + ((getContent() == null) ? 0 : getContent().hashCode());
+        result = prime * result + ((getType() == null) ? 0 : getType().hashCode());
+        result = prime * result + ((getScore() == null) ? 0 : getScore().hashCode());
         result = prime * result + ((getIsDeleted() == null) ? 0 : getIsDeleted().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
         result = prime * result + ((getUpdateTime() == null) ? 0 : getUpdateTime().hashCode());
@@ -137,6 +145,8 @@ public class MessageDetail implements Serializable {
         sb.append(", sendTime=").append(sendTime);
         sb.append(", contentType=").append(contentType);
         sb.append(", content=").append(content);
+        sb.append(", type=").append(type);
+        sb.append(", score=").append(score);
         sb.append(", isDeleted=").append(isDeleted);
         sb.append(", createTime=").append(createTime);
         sb.append(", updateTime=").append(updateTime);

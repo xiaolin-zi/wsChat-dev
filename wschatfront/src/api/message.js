@@ -33,5 +33,13 @@ export default {
             method: 'post',
             data: message
         })
+    },
+    updateMessageToRedis(oldMess, newMess) {
+        return request({
+            url: `/message/updateMessageToRedis`,
+            method: 'post',
+            data: {oldMess, newMess}
+        })
+
     }
 }

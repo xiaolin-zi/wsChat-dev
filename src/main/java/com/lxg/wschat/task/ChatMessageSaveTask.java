@@ -31,7 +31,7 @@ public class ChatMessageSaveTask {
     /**
      * 定时任务，每天凌晨3点进行redis缓存的持久化，将聊天记录保存到数据库
      */
-    @Scheduled(cron = "0 0 3 * * ?")
+    @Scheduled(cron = "0 0 1 * * ? ")
     public void chatMessageSave() {
         log.info("【定时任务】 开始！");
 
@@ -57,7 +57,7 @@ public class ChatMessageSaveTask {
     /**
      * 定时任务，每天凌晨3点进行redis缓存的持久化，将会话记录保存到数据库
      */
-    @Scheduled(cron = "0 0 3 * * ?")
+    @Scheduled(cron = "0 0 1 * * ? ")
     public void chatSessionSave() {
         log.info("【定时任务】 开始！");
 
@@ -72,7 +72,8 @@ public class ChatMessageSaveTask {
                 log.info("【定时任务】 " + allMessage.size() + "条会话记录持久化到MySQL。");
                 log.info("【定时任务】 " + allMessage.size() + "条会话记录缓存已清空。");
             } catch (Exception e) {
-                log.error("【定时任务】 Redis出错！");
+                log.error("【定时任务】 Redis出错！",e);
+//                log.error("【定时任务】 Redis出错！");
             }
         } else {
             log.info("【定时任务】 无新会话记录持久化到MySQL。");

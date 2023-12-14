@@ -87,6 +87,23 @@ public class RedisServiceImpl implements RedisService {
             message.setLastTime(obj.getStr("lastTime"));
             result.add(message);
         }
+
+        //群聊
+        Set<String> chatGroupMessage_ = getCacheKeys("chatGroupMessage_");
+        for(String s : chatGroupMessage_){
+            Object o = redisTemplate.opsForValue().get(s);
+            // 将JSON数据转换为对象，方便操作
+            JSONObject obj = JSONUtil.parseObj(o);
+            Message message = new Message();
+            message.setUserId(obj.getStr("userId"));
+            message.setAcceptId(obj.getStr("acceptId"));
+            message.setName(obj.getStr("name"));
+            message.setAvatar(obj.getStr("avatar"));
+            message.setType(Integer.valueOf(obj.getStr("type")));
+            message.setLastMess(obj.getStr("lastMess"));
+            message.setLastTime(obj.getStr("lastTime"));
+            result.add(message);
+        }
         return result;
     }
 
@@ -94,6 +111,10 @@ public class RedisServiceImpl implements RedisService {
     public void removeMessageRedis() {
         Set<String> chatMessage_ = getCacheKeys("chatMessage_");
         for(String s : chatMessage_){
+            redisTemplate.delete(s);
+        }
+        Set<String> chatGroupMessage_ = getCacheKeys("chatGroupMessage_");
+        for(String s : chatGroupMessage_){
             redisTemplate.delete(s);
         }
     }
@@ -144,6 +165,7 @@ public class RedisServiceImpl implements RedisService {
             messageDetail.setSendAvatar(obj.getStr("sendAvatar"));
             messageDetail.setSendNickname(obj.getStr("sendNickname"));
             messageDetail.setSendTime(obj.getStr("sendTime"));
+            messageDetail.setType(Integer.valueOf(obj.getStr("type")));
             userToOtherRedis.add(messageDetail);
         }
         return userToOtherRedis;
