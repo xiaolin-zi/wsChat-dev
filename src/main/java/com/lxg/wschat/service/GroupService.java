@@ -2,7 +2,6 @@ package com.lxg.wschat.service;
 
 import com.lxg.wschat.domain.Group;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.lxg.wschat.domain.User;
 import com.lxg.wschat.dto.GroupDTO;
 import com.lxg.wschat.mahout.MahoutDataModel;
 import com.lxg.wschat.vo.GroupInfoVO;
@@ -18,7 +17,7 @@ import java.util.List;
 */
 public interface GroupService extends IService<Group> {
 
-    Group getGroupInfo(String gourpId);
+    GroupInfoVO getGroupInfo(String gourpId);
 
     boolean addGroup(GroupDTO groupDTO, HttpServletRequest request);
 
@@ -37,4 +36,5 @@ public interface GroupService extends IService<Group> {
     List<MahoutDataModel> getGroupDataModel();
 
     List<GroupInfoVO> recommendGroup(HttpServletRequest request);
+
 }

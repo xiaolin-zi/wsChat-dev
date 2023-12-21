@@ -58,4 +58,19 @@ export default {
         })
     },
 
+    //获取粉丝列表
+    getFansList() {
+        return request({
+            url: `/user/getFansList`,
+            method: 'get',
+        })
+    },
+
+    //获取关注列表
+    getFollowList() {
+        return request({
+            url: `/user/getFollowList`,
+            method: 'get',
+        })
+    },
 }

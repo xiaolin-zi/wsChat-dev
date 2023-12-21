@@ -45,7 +45,7 @@ public class GroupController {
      */
     @GetMapping("/getGroupInfo/{gourpId}")
     public R getGroupInfo(@PathVariable String gourpId) {
-        Group group = groupService.getGroupInfo(gourpId);
+        GroupInfoVO group = groupService.getGroupInfo(gourpId);
         if(group == null) {
             return R.error().message("群聊不存在");
         }
@@ -170,4 +170,10 @@ public class GroupController {
         }
         return R.error().message("暂无记录");
     }
+
+
+
+
+
+
 }

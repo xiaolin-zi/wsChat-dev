@@ -86,7 +86,6 @@ public class WebSocketServerToken {
      */
     @OnMessage
     public void onMessage(String message, Session session) {
-
         // 获取ID
         String id = (String) session.getUserProperties().get("id");
         log.info("服务端收到来自用户ID为={}的消息:{}", id, message);
@@ -110,14 +109,19 @@ public class WebSocketServerToken {
 
         // 判断是否为群聊，1为否，2为是
         if (obj.getStr("type").equals("1")) {
-            //判断是否是心跳
+            //判断是否是心跳或系统通知
             //"chat_"+id+"to_"+users.get(i)给每个用户都存储一份聊天记录
-            if(!obj.getStr("contentType").equals("ping")){
+            if(!obj.getStr("contentType").equals("ping")&&!obj.getStr("contentType").equals("system")){
                 redisTemplate.opsForList().leftPush("chat_"+obj.getStr("sendId")+"to_"+obj.getStr("acceptId"),message);
                 log.info("chat_"+id+"to_"+obj.getStr("acceptId")+"的消息已存入redis");
+                users.add(obj.getStr("sendId"));
+                users.add(obj.getStr("acceptId"));
+            }else {
+                //如果是系统通知
+                users.add(obj.getStr("acceptId"));
             }
-            users.add(obj.getStr("sendId"));
-            users.add(obj.getStr("acceptId"));
+
+
         } else if (obj.getStr("type").equals("2")) {
             //将消息存储到redis中
             //如果是群聊

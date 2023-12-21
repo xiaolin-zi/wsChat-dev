@@ -63,8 +63,24 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
 
     @Transactional
     @Override
-    public Group getGroupInfo(String gourpId) {
-        return groupMapper.selectById(gourpId);
+    public GroupInfoVO getGroupInfo(String gourpId) {
+        Group group = groupMapper.selectById(gourpId);
+        if(group == null) {
+            return null;
+        }
+        GroupInfoVO groupInfoVO = new GroupInfoVO();
+        BeanUtils.copyProperties(group, groupInfoVO);
+        //获取群主信息
+        User user = userService.getById(group.getMasterId());
+        UserInfoVO userInfoVO = new UserInfoVO();
+        BeanUtils.copyProperties(user, userInfoVO);
+        groupInfoVO.setOwner(userInfoVO);
+        //获取群成员数量
+        QueryWrapper<UserGroup> wrapper = new QueryWrapper<>();
+        wrapper.eq("group_id", group.getId());
+        long count = userGroupService.count(wrapper);
+        groupInfoVO.setMemberCount(count);
+        return groupInfoVO;
     }
 
     @Transactional
@@ -273,7 +289,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
 
 
             //给指定用户推荐3个群聊
-            List<RecommendedItem> recommend = recommender.recommend(userId, 3);
+            List<RecommendedItem> recommend = recommender.recommend(userId, 2);
 //            List<RecommendedItem> recommend = itemRecommender.recommend(userId, 5);
             List<Long> collect = recommend.stream().map(RecommendedItem::getItemID).collect(Collectors.toList());
             List<GroupInfoVO> groupInfoVOList = new ArrayList<>();
@@ -304,7 +320,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
             }
 
             //如果推荐的群聊数量不足3个，随机推荐群聊
-            if (groupInfoVOList.size() < 3) {
+            if (groupInfoVOList.size() < 2) {
                 //查找所有没有加入的群聊
                 QueryWrapper<Group> wrapper = new QueryWrapper<>();
                 wrapper.notInSql("id", "select group_id from t_user_group where user_id=" + userId);
@@ -312,7 +328,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
                 //随机推荐
                 //可以通过随机数来获取群聊
                 Random random = new Random();
-                while (groupInfoVOList.size() < 3) {
+                while (groupInfoVOList.size() < 2) {
                     int i = random.nextInt(groupList.size());
                     Group group = groupList.get(i);
                     GroupInfoVO groupInfoVO = new GroupInfoVO();
@@ -342,6 +358,8 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group>
             throw new RuntimeException(e);
         }
     }
+
+
 }
 
 

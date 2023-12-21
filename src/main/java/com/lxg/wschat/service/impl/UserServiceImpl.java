@@ -590,6 +590,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return remove;
     }
 
+    @Override
+    public UserInfoVO getUserInfoByAccount(String account) {
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("account", account);
+        User user = baseMapper.selectOne(wrapper);
+        UserInfoVO userInfoVO = new UserInfoVO();
+        BeanUtils.copyProperties(user, userInfoVO);
+        return userInfoVO;
+    }
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override

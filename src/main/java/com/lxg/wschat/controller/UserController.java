@@ -196,6 +196,17 @@ public class UserController {
     }
 
 
+    /**
+     * 根据用户账号查询用户信息
+     */
+    @GetMapping("/getUserInfoByAccount/{account}")
+    public R getUserInfoByAccount(@PathVariable String account) {
+        UserInfoVO user = userService.getUserInfoByAccount(account);
+        if (user == null) {
+            return R.error().message("用户不存在");
+        }
+        return R.ok().data("userInfo", user);
+    }
 
 
 }

@@ -10,7 +10,10 @@
              </svg>
           </span>
           <div style="text-align: center;width: 100%"><span>聊天列表</span></div>
-
+          <!--添加一个搜索框,可以通过会话名称进行过滤-->
+          <div style="margin-top: 10px;margin-left: 10px;margin-right: 10px">
+            <el-input placeholder="搜索" v-model="messageSearchText" clearable></el-input>
+          </div>
           <div class="chat-list" style="height: 560px;scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-x: hidden;
@@ -25,7 +28,7 @@
                 ></el-avatar>
 
                 <div style="margin-left: 15px;">
-                  <p style="font-size: 14px;margin-top: 0px;margin-bottom: 0px;">{{ item.name }}<span
+                  <p style="font-size: 12px;margin-top: 0px;margin-bottom: 0px;">{{ item.name }}<span
                       v-if="item.type==2" style="color: #8a8282">[群聊]</span></p>
                   <!--                  <p style="font-size: 10px;margin: 0px;margin-top: 4px;color:#a19f9f;" class="text-overflow">-->
                   <!--                    {{ item.lastMess }}-->
@@ -58,6 +61,10 @@
              </svg>
           </span>
           <div style="text-align: center;width: 100%"><span>好友列表</span></div>
+          <!--添加一个搜索框-->
+          <div style="margin-top: 10px;margin-left: 10px;margin-right: 10px">
+            <el-input placeholder="搜索" v-model="friendSearchText" clearable></el-input>
+          </div>
           <div class="chat-list" style="height: 560px;scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-x: hidden;
@@ -72,10 +79,10 @@
                 ></el-avatar>
 
                 <div style="margin-left: 15px;">
-                  <p style="font-size: 14px;color: black">{{ item.nickname }}</p>
+                  <p style="font-size: 12px;color: black">{{ item.nickname }}</p>
                 </div>
                 <div style="position: sticky;left: 200px">
-                  <el-button size="small" @click="unfollowUser(item.id)" style="background-color: rgb(121, 180, 235)">
+                  <el-button size="mini" @click="unfollowUser(item.id)" style="background-color: rgb(121, 180, 235)">
                     互相⇋关注
                   </el-button>
                 </div>
@@ -91,6 +98,10 @@
             </svg>
           </span>
           <div style="text-align: center;width: 100%"><span>群组列表</span></div>
+          <!--添加一个搜索框-->
+          <div style="margin-top: 10px;margin-left: 10px;margin-right: 10px">
+            <el-input placeholder="搜索" v-model="groupSearchText" clearable></el-input>
+          </div>
           <div class="chat-list" style="height: 560px;scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-x: hidden;
@@ -104,11 +115,85 @@
                            :src="require('@/assets/image/avatar.jpg')"
                 ></el-avatar>
                 <div style="margin-left: 15px;">
-                  <p style="font-size: 14px;color: black">{{ item.name }}<span
+                  <p style="font-size: 12px;color: black">{{ item.name }}<span
                       style="color: #8a8282">({{ item.memberCount }})</span></p>
                 </div>
                 <div style="position: sticky;left: 200px">
-                  <el-button size="small" @click="exitGroup(item.id)">退出群聊</el-button>
+                  <el-button size="mini" @click="exitGroup(item.id)">退出群聊</el-button>
+                </div>
+              </div>
+
+            </el-card>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane style="text-align: center" name="watch">
+          <span slot="label">
+            <svg class="icon" aria-hidden="true" style="font-size: 20px">
+              <use xlink:href="#icon-yiguanzhu"></use>
+            </svg>
+          </span>
+          <div style="text-align: center;width: 100%"><span>关注列表</span></div>
+          <!--添加一个搜索框-->
+          <div style="margin-top: 10px;margin-left: 10px;margin-right: 10px">
+            <el-input placeholder="搜索" v-model="watchSearchText" clearable></el-input>
+          </div>
+          <div class="chat-list" style="height: 560px;scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-x: hidden;
+  overflow-y: auto;">
+            <el-card v-for="(item, index) in watchList" @click.native="select(item,'关注列表')" :key="item.id"
+                     shadow="hover" style="margin-top: 10px;" :class="{ selected: selectedItem === item }">
+              <div class="user_list_item">
+                <el-avatar shape="square" :size="35" v-if="item.avatar !== '' & item.avatar !== undefined"
+                           :src="item.avatar" style="vertical-align:middle;"></el-avatar>
+                <el-avatar shape="square" :size="35" v-else style="vertical-align:middle;"
+                           :src="require('@/assets/image/avatar.jpg')"
+                ></el-avatar>
+
+                <div style="margin-left: 15px;">
+                  <p style="font-size: 12px;color: black">{{ item.nickname }}</p>
+                </div>
+                <div style="position: sticky;left: 200px">
+                  <el-button size="mini" @click="unfollowUser(item.id)" style="background-color: rgb(121, 180, 235)">
+                    已关注
+                  </el-button>
+                </div>
+              </div>
+
+            </el-card>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane style="text-align: center" name="fans">
+          <span slot="label">
+            <svg class="icon" aria-hidden="true" style="font-size: 20px">
+              <use xlink:href="#icon-ziyuan"></use>
+            </svg>
+          </span>
+          <div style="text-align: center;width: 100%"><span>粉丝列表</span></div>
+          <!--添加一个搜索框-->
+          <div style="margin-top: 10px;margin-left: 10px;margin-right: 10px">
+            <el-input placeholder="搜索" v-model="fansSearchText" clearable></el-input>
+          </div>
+          <div class="chat-list" style="height: 560px;scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-x: hidden;
+  overflow-y: auto;">
+            <el-card v-for="(item, index) in fansList" @click.native="select(item,'粉丝列表')" :key="item.id"
+                     shadow="hover" style="margin-top: 10px;" :class="{ selected: selectedItem === item }">
+              <div class="user_list_item">
+                <el-avatar shape="square" :size="35" v-if="item.avatar !== '' & item.avatar !== undefined"
+                           :src="item.avatar" style="vertical-align:middle;"></el-avatar>
+                <el-avatar shape="square" :size="35" v-else style="vertical-align:middle;"
+                           :src="require('@/assets/image/avatar.jpg')"
+                ></el-avatar>
+
+                <div style="margin-left: 15px;">
+                  <p style="font-size: 12px;color: black">{{ item.nickname }}</p>
+                </div>
+                <div style="position: sticky;left: 200px">
+                  <el-button size="mini" @click="followUser(item.id)" style="background-color: rgb(121, 180, 235)">
+                    回关
+                  </el-button>
                 </div>
               </div>
 
@@ -138,16 +223,49 @@
                 ></el-avatar>
 
                 <div style="margin-left: 15px;">
-                  <p style="font-size: 14px;color: #ff6200">{{ item.nickname }}</p>
+                  <p style="font-size: 12px;color: #ff6200">{{ item.nickname }}</p>
                 </div>
                 <div style="position: sticky;left: 200px">
-                  <el-button size="small" @click="followUser(item.id)">关注</el-button>
+                  <el-button size="mini" @click="followUser(item.id)">关注</el-button>
+                </div>
+              </div>
+
+            </el-card>
+            <el-card v-for="(item, index) in RecommendGroupList" @click.native="select(item,'添加好友')" :key="item.id"
+                     shadow="hover" style="margin-top: 10px;" :class="{ selected: selectedItem === item }">
+              <div class="user_list_item">
+                <el-avatar shape="square" :size="35" v-if="item.avatar !== '' & item.avatar !== undefined"
+                           :src="item.avatar" style="vertical-align:middle;"></el-avatar>
+                <el-avatar shape="square" :size="35" v-else style="vertical-align:middle;"
+                           :src="require('@/assets/image/avatar.jpg')"
+                ></el-avatar>
+                <div style="margin-left: 15px;">
+                  <p style="font-size: 12px;color: black">{{ item.name }}<span
+                      style="color: #8a8282">({{ item.memberCount }})</span></p>
+                </div>
+                <div style="position: sticky;left: 200px">
+                  <el-button size="mini" @click="applyGroup(item.owner.id)">申请</el-button>
                 </div>
               </div>
 
             </el-card>
           </div>
+
+
         </el-tab-pane>
+        <el-tab-pane style="text-align: center" name="notify">
+          <span slot="label">
+            <svg class="icon" aria-hidden="true" style="font-size: 20px">
+              <use xlink:href="#icon-tongzhi"></use>
+            </svg>
+          </span>
+          <div style="text-align: center;width: 100%"><span>系统通知</span></div>
+          <!--添加一个搜索框-->
+          <div style="margin-top: 10px;margin-left: 10px;margin-right: 10px">
+            <el-input placeholder="搜索" v-model="SysSearchText" clearable></el-input>
+          </div>
+        </el-tab-pane>
+
       </el-tabs>
     </div>
 
@@ -286,10 +404,16 @@
 
     <!--添加好友框-->
     <div v-else-if="myaction == 'add'" class="mess_dialog">
-      <div style="margin-top: 20px">
-        <el-input></el-input>
-        <el-button type="primary">搜索</el-button>
+      <!--搜索框-->
+      <div class="dlog_header">
+        <el-input placeholder="搜索" v-model="friendSearchText" clearable></el-input>
+        <el-button type="primary" @click="">搜索</el-button>
       </div>
+      <!--搜索结果-->
+      <div style="text-align: left;color: #8a8282;font-size: 14px;margin-top: 20px">搜索结果：</div>
+      <!--居中展示-->
+
+
     </div>
     <!--其他显示-->
     <div v-else class="mess_dialog_false">
@@ -336,17 +460,31 @@ export default {
   name: 'wsChat',
   data() {
     return {
+      friendSearchText: '',//好友搜索框
+      groupSearchText: '',//群组搜索框
+      SysSearchText: '',//系统通知搜索框
+      watchSearchText: '',//关注搜索框
+      fansSearchText: '',//粉丝搜索框
+      messageSearchText: '',//会话搜索框
+      watchList: [],//关注列表
+      watchListCopy: [],//关注列表备份
+      fansList: [],//粉丝列表
+      fansListCopy: [],//粉丝列表备份
       sensitiveWords: zanghua.split(','),//敏感词列表
       allChatRecords: {},//所有聊天记录
       groupMembers: [],//接收人id列表
       messageList: [],//会话列表
+      messageListCopy: [],//会话列表备份
       friendList: [],//好友列表
+      friendListCopy: [],//好友列表备份
       groupList: [],//群组列表
+      groupListCopy: [],//群组列表备份
       chatRecordsList: [],//消息列表
       myaction: '',
       tabName: 'chat',//tab选中名称
       selectedItem: null,//选中
       RecommendUserList: [],//推荐用户列表
+      RecommendGroupList: [],//推荐群组列表
       isShowDialog: false, // 发送图片预览dialog
       imageUrl: '', // 预览图
       files: {}, // 发送的文件
@@ -386,6 +524,37 @@ export default {
 
   },
   watch: {
+    //可以监听messageSearchText的变化，当messageSearchText变化时，进行过滤
+    messageSearchText: function (newVal, oldVal) {
+      this.messageList = this.messageList.filter(item => item.name.indexOf(newVal) !== -1);
+      if (newVal === '') {
+        this.messageList = this.messageListCopy;
+      }
+    },
+    friendSearchText: function (newVal, oldVal) {
+      this.friendList = this.friendList.filter(item => item.nickname.indexOf(newVal) !== -1);
+      if (newVal === '') {
+        this.friendList = this.friendListCopy;
+      }
+    },
+    groupSearchText: function (newVal, oldVal) {
+      this.groupList = this.groupList.filter(item => item.name.indexOf(newVal) !== -1);
+      if (newVal === '') {
+        this.groupList = this.groupListCopy;
+      }
+    },
+    watchSearchText: function (newVal, oldVal) {
+      this.watchList = this.watchList.filter(item => item.nickname.indexOf(newVal) !== -1);
+      if (newVal === '') {
+        this.watchList = this.watchListCopy;
+      }
+    },
+    fansSearchText: function (newVal, oldVal) {
+      this.fansList = this.fansList.filter(item => item.nickname.indexOf(newVal) !== -1);
+      if (newVal === '') {
+        this.fansList = this.fansListCopy;
+      }
+    },
     // 监听当前消息列表，更新时，保持滚动条位于底部
     chatRecordsList: function scrollToBottom() {
       this.$nextTick(() => {
@@ -404,6 +573,39 @@ export default {
     }
   },
   methods: {
+    applyGroup(userId) {
+      //提示
+      this.$confirm('确定申请加入该群聊吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info'
+      }).then(() => {
+        //创建系统消息
+        let obj = JSON.stringify({
+          sendId: this.userInfo.id,
+          type: 1,
+          acceptId: userId,
+          sendAvatar: this.userInfo.avatar,
+          sendNickname: this.userInfo.nickname,
+          contentType: 'system',
+          content: '申请加入群聊',
+          sendTime: moment().format('YYYY-MM-DD HH:mm:ss')
+        })
+        this.ws.send(obj);
+        this.$message({
+          type: 'success',
+          message: '申请成功'
+        });
+        //新增系统会话记录
+        //todo
+
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消申请'
+        });
+      });
+    },
     //退出群聊
     exitGroup(id) {
       //提示
@@ -537,18 +739,35 @@ export default {
     getMessages() {
       MessageApi.getMessageList().then((res) => {
         this.messageList = res.data.data.messageList;
+        this.messageListCopy = res.data.data.messageList;
         // console.log(res);
       })
     },
     getGroups() {
       groupApi.getGroupList().then((res) => {
         this.groupList = res.data.data.groupList;
+        this.groupListCopy = res.data.data.groupList;
         // console.log(res);this.
+      })
+    },
+    getWatch() {
+      userApi.getFollowList().then((res) => {
+        this.watchList = res.data.data.list;
+        this.watchListCopy = res.data.data.list;
+        // console.log(res);
+      })
+    },
+    getFans() {
+      userApi.getFansList().then((res) => {
+        this.fansList = res.data.data.list;
+        this.fansListCopy = res.data.data.list;
+        // console.log(res);
       })
     },
     getFriends() {
       userApi.getFriendList().then((res) => {
         this.friendList = res.data.data.list;
+        this.friendListCopy = res.data.data.list;
         // console.log(res);
       })
     },
@@ -608,6 +827,42 @@ export default {
           }
         }
         this.toGroups();
+      } else if (tab.name == 'watch') {
+        if (this.myaction != "watch") {
+          //将acceptUser置空
+          this.acceptUser = {
+            name: '', // 对话的用户名或群名
+            userId: '', // 对话用户的id
+            type: '', // 对话用户类型(个人、群)
+            avatar: '', // 对话用户头像
+          }
+        }
+        this.toWatch();
+      } else if (tab.name == 'fans') {
+        if (this.myaction != "fans") {
+          //将acceptUser置空
+          this.acceptUser = {
+            name: '', // 对话的用户名或群名
+            userId: '', // 对话用户的id
+            type: '', // 对话用户类型(个人、群)
+            avatar: '', // 对话用户头像
+          }
+        }
+        this.toFans();
+      }
+    },
+    toFans() {
+      this.myaction = 'fans';
+      //如果粉丝列表为空，进行初始化
+      if (this.fansList.length === 0) {
+        this.getFans();
+      }
+    },
+    toWatch() {
+      this.myaction = 'watch';
+      //如果群组列表为空，进行初始化
+      if (this.watchList.length === 0) {
+        this.getWatch();
       }
     },
     toGroups() {
@@ -628,7 +883,7 @@ export default {
       this.myaction = 'tochat';
     },
     addFriend() {
-      this.myaction = 'toadd';
+      this.myaction = 'add';
     },
     select(item, type) {
       // console.log(item)
@@ -761,6 +1016,20 @@ export default {
             this.allChatRecords[obj.sendId + "type-" + obj.type].push(obj)
           }
         }
+      }else if (obj.contentType === 'system') {
+        /** 接收类型-好友申请 */
+        // let content = {
+        //   id: obj.send_id,
+        //   name: obj.send_name,
+        //   avatar_url: obj.send_avatar
+        // }
+        // 强制刷新
+        // this.pendingList.push(content)
+        this.$notify({
+          title: '提示',
+          message: '用户:"' + obj.sendNickname + '"--申请加入群聊!',
+          type: 'success'
+        })
       }
     },
     //更新会话列表的最后一条消息
@@ -949,7 +1218,6 @@ export default {
         //发送消息
         console.log("发送消息")
         this.ws.send(obj)
-
         //判断会话列表有没有该用户的会话
         let isHave = false;
         this.messageList.forEach((item) => {
@@ -1011,57 +1279,23 @@ export default {
             })
           }
         }
-        // else {
-        //   //如果有，就更新一条
-        //   this.messageList.forEach((item) => {
-        //     if (item.acceptId === this.acceptUser.userId && item.type === this.acceptUser.type) {
-        //       if (contentType === 'image') {
-        //         item.lastMess = '[图片]'
-        //       } else {
-        //         item.lastMess = this.mess;
-        //       }
-        //       item.lastTime = moment().format('MM-DD');
-        //     }
-        //   })
-        //   let obj = {
-        //     userId: this.userInfo.id,
-        //     acceptId: this.acceptUser.userId,
-        //     groupUserIds: ids,
-        //     avatar: this.acceptUser.avatar,
-        //     name: this.acceptUser.name,
-        //     type: this.acceptUser.type,
-        //     lastMess: lastMess,
-        //     lastTime: moment().format('MM-DD'),
-        //   }
-        //
-        //   //保存到redis
-        //   MessageApi.saveMessageToRedis(obj).then((res) => {
-        //     // console.log(res);
-        //   })
-        //   //对方的会话列表也要更新一条
-        //   let obj2 = {
-        //     userId: this.acceptUser.userId,
-        //     acceptId: this.userInfo.id,
-        //     avatar: this.userInfo.avatar,
-        //     name: this.userInfo.nickname,
-        //     type: this.acceptUser.type,
-        //     lastMess: lastMess,
-        //     lastTime: moment().format('MM-DD'),
-        //   }
-        //   MessageApi.saveMessageToRedis(obj2).then((res) => {
-        //     // console.log(res);
-        //   })
-        // }
-
         // 发送完消息，清空输入框
         this.mess = ''
       }
     },
+    //发送系统消息
+    async sendSysMess(contentType, content) {
 
+    },
     getRecommend() {
       console.log("获取推荐用户列表")
       userApi.getRecommendUserList().then((res) => {
         this.RecommendUserList = res.data.data.list;
+        console.log(res);
+      })
+      console.log("获取推荐群聊列表")
+      groupApi.getRecommendGroupList().then((res) => {
+        this.RecommendGroupList = res.data.data.list;
         console.log(res);
       })
     }

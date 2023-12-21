@@ -59,4 +59,6 @@ public interface UserService extends IService<User> {
 
 
     boolean exitGroup(String groupId, HttpServletRequest request);
+
+    UserInfoVO getUserInfoByAccount(String account);
 }
