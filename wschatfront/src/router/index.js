@@ -41,6 +41,11 @@ const myRouter = new VueRouter({
             path:'/register',
             name:'toRegister',
             component:() => import('@/views/register.vue')
+        },
+        {
+            path:'/test',
+            name:'toTest',
+            component:() => import('@/views/testChat.vue')
         }
     ]
 })

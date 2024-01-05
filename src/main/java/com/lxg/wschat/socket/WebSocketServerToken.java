@@ -112,16 +112,15 @@ public class WebSocketServerToken {
             //判断是否是心跳或系统通知
             //"chat_"+id+"to_"+users.get(i)给每个用户都存储一份聊天记录
             if(!obj.getStr("contentType").equals("ping")&&!obj.getStr("contentType").equals("system")){
-                redisTemplate.opsForList().leftPush("chat_"+obj.getStr("sendId")+"to_"+obj.getStr("acceptId"),message);
-                log.info("chat_"+id+"to_"+obj.getStr("acceptId")+"的消息已存入redis");
-                users.add(obj.getStr("sendId"));
-                users.add(obj.getStr("acceptId"));
+                //如果是ai机器人，不要存储
+                    redisTemplate.opsForList().leftPush("chat_"+obj.getStr("sendId")+"to_"+obj.getStr("acceptId"),message);
+                    log.info("chat_"+id+"to_"+obj.getStr("acceptId")+"的消息已存入redis");
+                    users.add(obj.getStr("sendId"));
+                    users.add(obj.getStr("acceptId"));
             }else {
                 //如果是系统通知
                 users.add(obj.getStr("acceptId"));
             }
-
-
         } else if (obj.getStr("type").equals("2")) {
             //将消息存储到redis中
             //如果是群聊
@@ -130,10 +129,6 @@ public class WebSocketServerToken {
             log.info("chatGroup_"+obj.getStr("acceptId")+"的消息已存入redis");
             users = obj.getJSONArray("acceptMember");
         }
-
-
-
-
         // 判断是否存在发送对象
         if (users.size() > 0) {
             for (int i=0;i<users.size();i++){

@@ -116,4 +116,17 @@ public class MessageController {
     }
 
 
+    /**
+     * 删除用户聊天记录
+     */
+//    @PostMapping("/deleteChatRecord/{acceptId}/{type}")
+//    public R deleteChatRecord(HttpServletRequest request, @PathVariable String acceptId, @PathVariable Integer type) {
+//        boolean flag = messageService.deleteChatRecord(request, acceptId, type);
+//        if (flag) {
+//            return R.ok().message("删除聊天记录成功");
+//        }
+//        return R.error().message("删除聊天记录失败");
+//    }
+
+
 }

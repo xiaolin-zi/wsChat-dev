@@ -183,10 +183,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
     }
 
 
-
-
-
-
     /**
      * 根据匹配模式获取key
      *
@@ -461,7 +457,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
     }
 
 
-
     @Override
     public void saveAll(List<Message> allMessage) {
         //需要判断，如果数据库已经存在该会话记录，则需要更新
@@ -480,6 +475,8 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
             }
         }
     }
+
+
 
 
 }

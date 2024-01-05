@@ -10,6 +10,13 @@ aliyun:
       keyid: LTAI5tDDc7oFqhiZFejDVZtp
       keysecret: UWBM3EChOz3WNt4NiiJ4N8E0dTZH00
 
+baidu:
+  clientId: 7d8B4sjXqzFIZSItGjzMBPoE
+  clientSecret: fMyp1YHdcvI0NrlwfRzKGp740eEkuqVn
+gpt:
+  token: sk-jss3OsANYgFr6qTbFa1bD4E5399c49C0Ae6f73647fF2E154
+gpt2:
+  token: sk-Qt2Nf5Nm2XOXCxHW3jsbDcoKfLgDrrwdGm9rCzbQmsccX6rp
 
 server:
   port: 6666

@@ -301,9 +301,9 @@
               <div v-if="item.contentType === 'image'" class="img_left">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
-              <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
-                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500">{{ item.content }}</span>
-                <span class="mess_content_msg" v-else>{{ item.content }}</span>
+              <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)" v-html="getContent(item.content)">
+<!--                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500" v-html="item.content"></span>-->
+<!--                <span class="mess_content_msg" v-else v-html="item.content"></span>-->
               </div>
             </div>
           </div>
@@ -325,9 +325,9 @@
               <div v-if="item.contentType === 'image'" class="img_left">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
-              <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
-                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500">{{ item.content }}</span>
-                <span class="mess_content_msg" v-else>{{ item.content }}</span>
+              <div v-else class="content_other_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)" v-html="getContent(item.content)">
+<!--                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500" v-html="item.content"></span>-->
+<!--                <span class="mess_content_msg" v-else v-html="item.content"></span>-->
               </div>
             </div>
           </div>
@@ -343,9 +343,9 @@
               <div v-if="item.contentType === 'image'" class="img">
                 <el-image :src="item.content" :preview-src-list="imgNowList" class="images"></el-image>
               </div>
-              <div v-else class="content_me_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)">
-                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500">{{ item.content }}</span>
-                <span class="mess_content_msg" v-else>{{ item.content }}</span>
+              <div v-else class="content_me_bgd" @contextmenu.prevent="show_rightMenu_mess_content($event, item)" v-html="getContent(item.content)">
+<!--                <span class="mess_content_msg" v-if="item.sendId==1" style="font-weight: 500" v-html="item.content"></span>-->
+<!--                <span class="mess_content_msg" v-else v-html="item.content"></span>-->
               </div>
             </div>
             <div>
@@ -388,7 +388,7 @@
             </div>
           </div>
           <div class="inputDeep">
-            <el-input style="border: 0px" type="textarea" :rows="2" v-model="mess" maxlength="500"
+            <el-input style="border: 0px" type="textarea" :rows="2" v-model="mess"
                       placeholder="按Ctrl + Enter 发送"
                       @keydown.enter.native="keyDown"></el-input>
             <button @click="Wssendmess('message', '')"
@@ -454,12 +454,19 @@ import groupApi from "@/api/group";
 import MessageApi from "@/api/message";
 import cookie from "js-cookie";
 import ossApi from "@/api/oss";
+import aiApi from "@/api/ai";
 import {zanghua} from "@/assets/zh.json";
+import mdKatex from '@traptitech/markdown-it-katex'
+import MarkdownIt from 'markdown-it'
+import "highlight.js/styles/github-dark.min.css";
+import ClipboardJS from 'clipboard';
+import hljs from "highlight.js";
 
 export default {
   name: 'wsChat',
   data() {
     return {
+      aiChatMess: [],//ai聊天信息
       friendSearchText: '',//好友搜索框
       groupSearchText: '',//群组搜索框
       SysSearchText: '',//系统通知搜索框
@@ -557,6 +564,31 @@ export default {
     },
     // 监听当前消息列表，更新时，保持滚动条位于底部
     chatRecordsList: function scrollToBottom() {
+      if(this.chatRecordsList){
+        //先清空
+        this.aiChatMess = []
+        this.chatRecordsList.forEach((item) => {
+          if(item.sendId === "2"){
+            this.aiChatMess.push({
+              "role": "assistant",
+              "content": item.content
+            })
+          }else{
+            this.aiChatMess.push({
+              "role": "user",
+              "content": item.content
+            })
+          }
+
+        })
+        // //先查看aiChatMess最后一条是不是自己发的，如果是，直接清空，如果不是，就添加一条
+        // if(this.aiChatMess.length > 0){
+        //   if(this.aiChatMess[this.aiChatMess.length - 1].role === "user"){
+        //     this.aiChatMess = []
+        //   }
+        // }
+      }
+      console.log(this.aiChatMess)
       this.$nextTick(() => {
         var message = document.getElementById('content_overflow')
         // 滚动滑钮到滚动条顶部的距离=滚动条的高度
@@ -573,6 +605,66 @@ export default {
     }
   },
   methods: {
+    getContent(content){
+      //如果有代码块
+      if(this.hasCodeBlock(content)){
+        return this.getMdiText(content)
+      }else{
+        return content
+      }
+    },
+    hasCodeBlock(text) {
+      const regex = /```[\s\S]*?```/g;
+      return regex.test(text);
+    },
+    highlightBlock(str, lang) {
+      const codeIndex1 = parseInt(Date.now() + "") + Math.floor(Math.random() * 10000000);
+      const codeIndex2 = parseInt(Date.now() + "") + Math.floor(Math.random() * 10000000);
+
+      const clipboard = new ClipboardJS(`#copy-${codeIndex2}`);
+      // 复制成功失败的提示
+      clipboard.on("success", (e) => {
+        this.$message.success("复制成功");
+      });
+      clipboard.on("error", (e) => {
+        this.$message.error("复制失败");
+      });
+
+      return `<pre class="pre-code-box"><div class="pre-code-header" style="background-color: rgb(75, 85, 105);
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  color: rgb(255,255,255);
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+  line-height: 20px;
+  padding: 5px 10px;
+  user-select: none;"><span class="code-block-header__lang">${lang}</span><span id="copy-${codeIndex2}" class="code-block-header__copy" data-clipboard-action="copy" data-clipboard-target="#copy${codeIndex1}">复制代码</span></div><div class="pre-code" style="margin: 0;
+  padding: 0;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-all;
+  word-wrap: break-word;
+  position: relative;"><code id="copy${codeIndex1}" class="hljs code-block-body ${lang}">${str}</code></div></pre>`
+    },
+    getMdiText(value) {
+      var _this = this
+      const mdi = new MarkdownIt({
+        linkify: true,
+        highlight(code, language) {
+          const validLang = !!(language && hljs.getLanguage(language))
+          if (validLang) {
+            const lang = language ?? ''
+            return _this.highlightBlock(hljs.highlight(code, { language: lang, ignoreIllegals: true })
+                .value, lang)
+          }
+          return _this.highlightBlock(hljs.highlightAuto(code).value, '')
+        }
+      })
+      mdi.use(mdKatex, {blockClass: 'katexmath-block rounded-md p-[10px]', errorColor: ' #cc0000'})
+      return mdi.render(value)
+    },
     applyGroup(userId) {
       //提示
       this.$confirm('确定申请加入该群聊吗？', '提示', {
@@ -788,7 +880,6 @@ export default {
             type: '', // 对话用户类型(个人、群)
             avatar: '', // 对话用户头像
           }
-          console.log(this.acceptUser);
         }
         // 触发‘添加好友’事件
         this.addFriend();
@@ -1016,7 +1107,7 @@ export default {
             this.allChatRecords[obj.sendId + "type-" + obj.type].push(obj)
           }
         }
-      }else if (obj.contentType === 'system') {
+      } else if (obj.contentType === 'system') {
         /** 接收类型-好友申请 */
         // let content = {
         //   id: obj.send_id,
@@ -1034,7 +1125,6 @@ export default {
     },
     //更新会话列表的最后一条消息
     updateLastMess(obj) {
-      console.log(this.messageList)
       this.messageList.forEach((item) => {
         if (item.acceptId === obj.acceptId && item.type === obj.type) {
           if (obj.contentType === 'image') {
@@ -1105,7 +1195,6 @@ export default {
         this.sendImgLoad = false
         if (res.data.code === 20000) {
           this.isShowDialog = false
-
           this.Wssendmess('image', res.data.data.url)
         } else {
           this.$message.error(res.data.message)
@@ -1203,6 +1292,8 @@ export default {
           })
         }
 
+
+
         let obj = JSON.stringify({
           sendId: this.userInfo.id,
           type: this.acceptUser.type,
@@ -1218,6 +1309,48 @@ export default {
         //发送消息
         console.log("发送消息")
         this.ws.send(obj)
+
+        this.aiChatMess.push({
+          "role":"user",
+          "content":message
+        })
+        //如果对方是AI助理(ai助理的id为2)
+        if (this.acceptUser.userId === "2" && this.acceptUser.type === 1) {
+          //如果超过15条，删除前面的
+          if(this.aiChatMess.length > 15){
+            this.aiChatMess.splice(0, this.aiChatMess.length - 15)
+          }
+          // var toAiObj = {
+          //   "userId": this.userInfo.id,
+          //   "messageDTOList": this.aiChatMess
+          // }
+          var toAiObj = {
+            "model": "gpt-3.5-turbo",
+            "messageDTOList": this.aiChatMess
+          }
+          aiApi.aiChat(toAiObj).then((res) => {
+            // console.log(res);
+            let aiMess = res.data.choices[0].message.content;
+            //发送消息
+            let obj = JSON.stringify({
+              sendId: "2",
+              type: 1,
+              acceptId: this.userInfo.id,
+              acceptMember: ids,
+              sendAvatar: this.acceptUser.avatar,
+              sendNickname: this.acceptUser.name,
+              contentType: "message",
+              // content: res.data.result,
+              content: aiMess,
+              sendTime: moment().format('YYYY-MM-DD HH:mm:ss')
+            })
+            this.ws.send(obj)
+          })
+        }
+
+
+
+
         //判断会话列表有没有该用户的会话
         let isHave = false;
         this.messageList.forEach((item) => {
@@ -1243,7 +1376,6 @@ export default {
               lastTime: moment().format('MM-DD'),
             }
             this.messageList.push(obj)
-            console.log(obj);
             //保存到redis
             MessageApi.saveMessageToRedis(obj).then((res) => {
               // console.log(res);
@@ -1291,12 +1423,10 @@ export default {
       console.log("获取推荐用户列表")
       userApi.getRecommendUserList().then((res) => {
         this.RecommendUserList = res.data.data.list;
-        console.log(res);
       })
       console.log("获取推荐群聊列表")
       groupApi.getRecommendGroupList().then((res) => {
         this.RecommendGroupList = res.data.data.list;
-        console.log(res);
       })
     }
   }
@@ -1304,6 +1434,79 @@ export default {
 }
 </script>
 <style scoped>
+.pre-code-box{
+  /*border-radius: 4px;*/
+  /*border: 1px solid #eaecef;*/
+  /*background-color: #f6f8fa;*/
+  /*margin: 0;*/
+  /*padding: 0;*/
+  /*overflow: auto;*/
+  /*font-size: 14px;*/
+  /*line-height: 1.5;*/
+  /*word-break: break-all;*/
+  /*word-wrap: break-word;*/
+  /*position: relative;*/
+}
+
+.pre-code-box .pre-code-header{
+  background-color: #f6f8fa;
+  border-bottom: 1px solid #eaecef;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  color: #6a737d;
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+  line-height: 20px;
+  padding: 5px 10px;
+  user-select: none;
+}
+
+.code-block-header__lang{
+  color: #6a737d;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.code-block-header__copy{
+  color: #6a737d;
+  cursor: pointer;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.pre-code{
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-all;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.code-block-body{
+  margin: 0;
+  padding: 16px;
+  background-color: #f6f8fa;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  color: #24292e;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: auto;
+  word-break: normal;
+  word-wrap: normal;
+}
+
+.code-block-body .hljs-comment,
+.code-block-body .hljs-quote{
+  color: #6a737d;
+}
 .selected {
   background-color: rgb(209, 222, 240);
 }
@@ -1673,9 +1876,9 @@ export default {
   display: inline-block;
   padding: 0px 6px;
   width: auto;
-  height: auto;
-  line-height: 34px;
-  background: #95ec69;
+  /*height: auto;*/
+  line-height: 30px;
+  background: #f2f6fc;
   z-index: 0;
   text-align: left;
 }
@@ -1683,7 +1886,7 @@ export default {
 .content_me_bgd::after {
   border-style: solid;
   border-width: 0 0 11px 11px;
-  border-color: transparent transparent transparent #95ec69;
+  border-color: transparent transparent transparent #f6f8fa;
   content: "";
   position: absolute;
   top: 10px;
