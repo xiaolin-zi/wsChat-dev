@@ -93,9 +93,9 @@ public class AIController {
             try (Response okHttpResponse = HTTP_CLIENT.newCall(request).execute()) {
                 // 设置响应的内容类型和头信息
                 response.setContentType("text/event-stream");
+                response.setCharacterEncoding("UTF-8");
                 response.setHeader("Cache-Control", "no-cache");
                 response.setHeader("Connection", "keep-alive");
-                response.setCharacterEncoding("UTF-8");
                 // 获取响应的流
                 InputStream inputStream = okHttpResponse.body().byteStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -210,9 +210,10 @@ public class AIController {
             try (Response okHttpResponse = HTTP_CLIENT.newCall(request).execute()) {
                 // 设置响应的内容类型和头信息
                 response.setContentType("text/event-stream");
+                response.setCharacterEncoding("UTF-8");
                 response.setHeader("Cache-Control", "no-cache");
                 response.setHeader("Connection", "keep-alive");
-                response.setCharacterEncoding("UTF-8");
+
                 // 获取响应的流
                 InputStream inputStream = okHttpResponse.body().byteStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -374,9 +375,10 @@ public class AIController {
             try (Response okHttpResponse = HTTP_CLIENT.newCall(request).execute()) {
                 // 设置响应的内容类型和头信息
                 response.setContentType("text/event-stream");
+                response.setCharacterEncoding("UTF-8");
                 response.setHeader("Cache-Control", "no-cache");
                 response.setHeader("Connection", "keep-alive");
-                response.setCharacterEncoding("UTF-8");
+
                 // 获取响应的流
                 InputStream inputStream = okHttpResponse.body().byteStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -408,6 +410,11 @@ public class AIController {
         }
     }
 
+    /**
+     * 无上下文
+     * @param response
+     * @param prompt
+     */
     @GetMapping("/draw/gpt")
     public void drawToGptStream(HttpServletResponse response,String prompt) {
         MediaType mediaType = MediaType.parse("application/json");
@@ -453,10 +460,11 @@ public class AIController {
 //            // 发送请求并获取响应
             try (Response okHttpResponse = HTTP_CLIENT.newCall(request).execute()) {
                 // 设置响应的内容类型和头信息
+                // 设置响应的内容类型和字符编码
                 response.setContentType("text/event-stream");
+                response.setCharacterEncoding("UTF-8");
                 response.setHeader("Cache-Control", "no-cache");
                 response.setHeader("Connection", "keep-alive");
-                response.setCharacterEncoding("UTF-8");
                 // 获取响应的流
                 InputStream inputStream = okHttpResponse.body().byteStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -489,4 +497,80 @@ public class AIController {
 
     }
 
+    /**
+     * 有上下文
+     */
+    @RequestMapping("/draw2/gpt")
+    public void drawToGptStream(HttpServletResponse response,@org.springframework.web.bind.annotation.RequestBody GPTChatDTO gptChatDTO) {
+        MediaType mediaType = MediaType.parse("application/json");
+        List<AIMessgaeDTO> messageDTOList = gptChatDTO.getMessageDTOList();
+        String model = gptChatDTO.getModel();
+        double temperature = 0.5;
+        int presencePenalty = 2;
+        boolean stream = true;
+        // 创建Gson对象
+        Gson gson = new Gson();
+        // 创建包含messages的JsonArray
+        JsonArray messagesArray = new JsonArray();
+        for (AIMessgaeDTO messageDTO : messageDTOList) {
+            JsonObject messageObject = new JsonObject();
+            messageObject.addProperty("role", messageDTO.getRole());
+            messageObject.addProperty("content", messageDTO.getContent());
+            messagesArray.add(messageObject);
+        }
+        // 创建包含disable_search和enable_citation的JsonObject
+        JsonObject bodyObject = new JsonObject();
+        bodyObject.add("messages", messagesArray);
+        bodyObject.addProperty("stream", stream);
+        bodyObject.addProperty("model", model);
+        bodyObject.addProperty("temperature", temperature);
+        bodyObject.addProperty("presence_penalty", presencePenalty);
+        // 将JsonObject转换为字符串
+        String requestBodyString = gson.toJson(bodyObject);
+        // 创建RequestBody
+        RequestBody body = RequestBody.create(mediaType, requestBodyString);
+        Request request = null;
+        try {
+            request = new Request.Builder()
+                    .url("https://ngedlktfticp.cloud.sealos.io/v1/chat/completions")
+                    .method("POST", body)
+                    .addHeader("Authorization", gptToken).build();
+            // 发送请求并获取响应
+            try (Response okHttpResponse = HTTP_CLIENT.newCall(request).execute()) {
+                // 设置响应的内容类型和头信息
+                response.setContentType("text/event-stream");
+                response.setCharacterEncoding("UTF-8");
+                response.setHeader("Cache-Control", "no-cache");
+                response.setHeader("Connection", "keep-alive");
+
+                // 获取响应的流
+                InputStream inputStream = okHttpResponse.body().byteStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                // 将每个data块作为一块一块的流式数据返回给前端
+                PrintWriter writer = response.getWriter();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if(line.equals("data: [DONE]")){
+                        System.out.println("\n[DONE]");
+//                        writer.write("\n[DONE]");
+//                        writer.flush();
+                    }else if (line.startsWith("data:")) {
+                        line = line.substring(6);
+                        JSONObject responseJson = new JSONObject(line);
+                        if(responseJson.getJSONArray("choices").getJSONObject(0).getJSONObject("delta").containsKey("content")){
+                            System.out.print(responseJson.getJSONArray("choices").getJSONObject(0).getJSONObject("delta").get("content"));
+                            Object o = responseJson.getJSONArray("choices").getJSONObject(0).getJSONObject("delta").get("content");
+                            writer.write(o.toString());
+                            writer.flush();
+                        }
+//                        writer.write(line + "\n\n");
+//                        writer.flush();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

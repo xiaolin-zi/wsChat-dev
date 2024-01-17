@@ -183,6 +183,10 @@ export default {
         "```") //htmlStr就是已经包含html样式的文本
   },
   methods: {
+    hasCodeBlock(text) {
+      const regex = /```[\s\S]*?```/g;
+      return regex.test(text);
+    },
     setScreen() {
       setTimeout(() => {
         window.scrollTo(0, document.body.scrollHeight);
@@ -295,18 +299,19 @@ export default {
       })
       const reader = res.body.getReader()
       let decoder = new TextDecoder();
-      let result = '';
       let flag = true;
       while (flag) {
         const {done, value} = await reader.read();
         if (done) {
-          console.log("Stream ended");
           flag = false;
           break;
         }
+        console.log(decoder.decode(value));
         this.list[this.list.length - 1].text += decoder.decode(value);
       }
-      this.list[this.list.length - 1].text = this.getMdiText(this.list[this.list.length - 1].text);
+      if (this.hasCodeBlock(this.list[this.list.length - 1].text)) {
+        this.list[this.list.length - 1].text = this.getMdiText(this.list[this.list.length - 1].text);
+      }
       this.aiChatMess.push({
         "role":"assistant",
         "content":this.list[this.list.length - 1].text

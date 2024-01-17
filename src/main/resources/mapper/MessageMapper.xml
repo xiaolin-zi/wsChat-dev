@@ -26,4 +26,5 @@
         is_show,avatar,last_mess,last_time,
         is_deleted,create_time,update_time
     </sql>
+
 </mapper>
