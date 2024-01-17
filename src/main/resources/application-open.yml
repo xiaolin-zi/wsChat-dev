@@ -1,24 +1,24 @@
 aliyun:
   oss:
     file:
-      bucketname: xiaolin-zi
-      endpoint: oss-cn-guangzhou.aliyuncs.com
-      keyid: LTAI5tRgcNpq2AiZapKykUx6
-      keysecret: qx14k2mJFlSqRow581dpizkCUM0Ba1
+      bucketname: xxx
+      endpoint: xxx
+      keyid: xxx
+      keysecret: xxx
   vod:
     file:
-      keyid: LTAI5tDDc7oFqhiZFejDVZtp
-      keysecret: UWBM3EChOz3WNt4NiiJ4N8E0dTZH00
+      keyid: xxx
+      keysecret: xxx
 
 baidu:
-  clientId: 7d8B4sjXqzFIZSItGjzMBPoE
-  clientSecret: fMyp1YHdcvI0NrlwfRzKGp740eEkuqVn
+  clientId: xxx
+  clientSecret: xxx
 
 
 gpt:
-  token: sk-jss3OsANYgFr6qTbFa1bD4E5399c49C0Ae6f73647fF2E154
+  token: xxx
 gpt2:
-  token: sk-Qt2Nf5Nm2XOXCxHW3jsbDcoKfLgDrrwdGm9rCzbQmsccX6rp
+  token: xxx
 
 
 
@@ -31,7 +31,7 @@ spring:
   mail:
     default-encoding: utf-8
     host: smtp.qq.com
-    password: fdzquckzjlgbdich
+    password: xxx
     properties:
       mail:
         smtp:
